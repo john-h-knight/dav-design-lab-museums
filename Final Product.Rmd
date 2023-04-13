@@ -809,7 +809,7 @@ data_awarded %>%
 
 ### Footnotes
 
-1.  Placeholder
+1.  I don't know why the institutions did not receive a grant.
 
 <br>
 
