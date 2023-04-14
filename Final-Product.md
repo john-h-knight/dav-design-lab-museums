@@ -1,7 +1,7 @@
 ---
 title: 'Final Product'
 author: "John Knight"
-date: "2023-04-13"
+date: "2023-04-14"
 output: 
   html_document: 
     keep_md: yes
@@ -17,7 +17,7 @@ output:
 
 <br>
 
-### Intro
+------------------------------------------------------------------------
 
 The Institute of Museum and Library Services (IMLS) is an independent agency of the federal government on a mission to, "advance, support, and empower America's museums libraries, and related organizations through grantmaking, research, and policy development."
 
@@ -25,13 +25,15 @@ The IMLS maintains a list of museums in the US in a set of files called the Muse
 
 The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
 
-### Summary
+Here is a summary.
 
 -   Placeholder
 
 -   Placeholder
 
 -   Placeholder
+
+------------------------------------------------------------------------
 
 <br>
 
@@ -40,9 +42,6 @@ The IMLS also makes available data regarding the grants they award to these inst
 For this project I'm going to use the following packages.
 
 
-```r
-library(tidyverse)
-```
 
 <br>
 
@@ -65,113 +64,24 @@ The next step is to import the data into RStudio. The first file is File 1 from 
 File 2 contains "uncategorized or general museums" and File 3 is "historical societies, historic preservation". The discipline variable will be another way to analyze the grant data.
 
 
-```r
-# import MDF File 1 (v2), format select columns
-data_museums_raw <- read_csv("MuseumFile2018_File1_Nulls v2.csv", 
-                             col_types = cols(DISCIPL = col_factor(levels = c("ART", "BOT", 
-                                                                              "CMU", "HST", 
-                                                                              "NAT", "SCI", 
-                                                                              "ZAW")), 
-                                              TAXPER15 = col_date(format = "%Y%m"),
-                                              INCOMECD15 = col_factor(levels = c("0", "1", 
-                                                                                 "2", "3", 
-                                                                                 "4", "5", 
-                                                                                 "6", "7",
-                                                                                 "8", "9")),
-                                              AAMREG = col_factor(levels = c("1", "2", "3",
-                                                                             "4", "5", "6")),
-                                              BEAREG = col_factor(levels = c("1", "2", "3",
-                                                                             "4", "5", "6",
-                                                                             "7", "8")),
-                                              LOCALE4 = col_factor(levels = c("1", "2", "3", 
-                                                                              "4"))
-                                              )
-                             )
-
-# select columns to work with
-data_museums <- data_museums_raw %>%
-  select(COMMONNAME,
-         LEGALNAME,
-         ADCITY,
-         ADSTATE,
-         LONGITUDE,
-         LATITUDE,
-         DISCIPL,
-         AAMREG,
-         BEAREG,
-         LOCALE4,
-         TAXPER15,
-         INCOMECD15,
-         INCOME15,
-         REVENUE15,
-         MID
-         )
-```
 
 <br>
 
 The second file contains data on all grants awarded to museums by the IMLS.
 
 
-```r
-# import grant data (v2)
-data_grants_raw <- read_csv("awarded-grants-2023-04-01 v2.csv")
-
-# select columns to work with
-data_grants <- data_grants_raw %>%
-  select(institution,
-         city,
-         state,
-         year,
-         funds,
-         `log number`
-         )
-```
 
 <br>
 
 In order to breakdown the grant data by multiple criteria I need to join the two files together into one dataset.
 
 
-```r
-# join requires the same case for character strings
-data_museums$COMMONNAME <- tolower(data_museums$COMMONNAME)
-data_grants$institution <- tolower(data_grants$institution)
-
-# join by name
-data_joined <- data_museums %>%
-  full_join(data_grants, 
-            by = c("COMMONNAME" = "institution"), 
-            keep = TRUE,
-            relationship = "many-to-many"
-            )
-```
 
 <br>
 
 What matched?
 
 
-```r
-data_joined %>%
-  filter(!is.na(COMMONNAME),
-         !is.na(funds)
-         ) %>%
-  group_by(institution) %>%
-  summarize(grants = n(),
-            funds = sum(funds)
-            ) %>%
-  summarise(total_grants = sum(grants),
-            total_funds = sum(funds)
-            )
-```
-
-```
-## # A tibble: 1 × 2
-##   total_grants total_funds
-##          <int>       <dbl>
-## 1         2354   266302369
-```
 
 <br>
 
@@ -184,24 +94,6 @@ data_joined %>%
 What didn't match?
 
 
-```r
-data_joined %>%
-  filter(is.na(COMMONNAME)) %>%
-  group_by(institution) %>%
-  summarize(grants = n(),
-            funds = sum(funds)
-            ) %>%
-  summarise(total_grants = sum(grants),
-            total_funds = sum(funds)
-            )
-```
-
-```
-## # A tibble: 1 × 2
-##   total_grants total_funds
-##          <int>       <dbl>
-## 1         8213   700932592
-```
 
 <br>
 
@@ -223,108 +115,39 @@ A grant may not match with an institution for several reasons:
 
 I suspect that #1 is the largest contributing factor. File 1 contains 7,429 entries while File 2 and 3 contain 22,742 together.
 
+------------------------------------------------------------------------
+
 <br>
 
 ### Where the grants went over the last 10 years
 
-<br>
 
-Institutions that received grants.
 
 
 ```r
-data <- data_joined %>%
-  filter(!is.na(COMMONNAME)) %>%    # remove awarded institutions not in the museum list
-  replace_na(list(year = 9999,      # replace NAs with values for analysis
-                  funds = 0
-                  )
-             ) %>%
-  filter(year >= 2013)              # filter for last 10 years (2013-2022)
-
 # filter for institutions that received grants
 data_awarded <- data %>%
-  filter(funds != 0)
+  filter(awarded == TRUE)
 ```
 
 <br>
 
-How many grants did the IMLS award over the last 10 years?
-
-
-```r
-# count
-data_awarded %>%
-  summarize(total_count = n())
-```
-
-```
-## # A tibble: 1 × 1
-##   total_count
-##         <int>
-## 1         628
-```
-
-```r
-# plot of count each year
-data_awarded %>%
-  group_by(year) %>%
-  count() %>%
-  ggplot(aes(x = year,
-             y = n
-             )
-         ) +
-  geom_line()
-```
-
-![](Final-Product_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
-
-<br>
-
-What's the total value of those grants?
-
-
-```r
-# total
-data_awarded %>%
-  summarize(total = sum(funds))
-```
-
-```
-## # A tibble: 1 × 1
-##       total
-##       <dbl>
-## 1 101674483
-```
-
-```r
-# plot of total by year
-data_awarded %>%
-  group_by(year) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = year,
-             y = funds
-             )
-         ) +
-  geom_line()
-```
-
-![](Final-Product_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
-
-<br>
-
-What was the average grant amount?
+How many grants did the IMLS award over the last 10 years and what was the total and average value?
 
 
 ```r
 data_awarded %>%
-  summarize(average = mean(funds))
+  summarize(grants = n(),
+            total_funds = sum(funds),
+            mean_award = mean(funds)
+            )
 ```
 
 ```
-## # A tibble: 1 × 1
-##   average
-##     <dbl>
-## 1 161902.
+## # A tibble: 1 × 3
+##   grants total_funds mean_award
+##    <int>       <dbl>      <dbl>
+## 1    628   101674483    161902.
 ```
 
 <br>
@@ -382,7 +205,7 @@ data_awarded %>%
   geom_bar()
 ```
 
-![](Final-Product_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 <br>
 
@@ -390,43 +213,44 @@ By discipline (total value of grants).
 
 
 
+
+```r
+# plot of absolute funds
+data_awarded %>%
+  group_by(DISCIPL) %>%
+  summarize(funds = sum(funds)) %>%
+  ggplot(aes(x = reorder(DISCIPL, -funds),
+             y = funds,
+             fill = DISCIPL
+             )
+         ) +
+  geom_col()
+```
+
+![](Final-Product_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+<br>
+
+By discipline (awarded vs not awarded).
+
+
+```r
+# plot of number of grants
+data %>%
+  ggplot(aes(x = DISCIPL,
+             fill = awarded
+             )
+         ) +
+  geom_bar()
+```
+
 ![](Final-Product_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 <br>
 
+By state (as map, percent of museums awarded).
 
 
-
-
-<br>
-
-By discipline (average grant value).
-
-
-
-![](Final-Product_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
-
-<br>
-
-By state (total value of grants).
-
-
-
-![](Final-Product_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
-
-<br>
-
-
-
-
-
-<br>
-
-By state (average grant value).
-
-
-
-![](Final-Product_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 <br>
 
@@ -434,21 +258,24 @@ By locale category, i.e. city, suburb, town, rural (total value of grants).
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 <br>
 
+By locale (awarded vs not awarded).
 
 
+```r
+# plot of number of grants
+data %>%
+  ggplot(aes(x = LOCALE4,
+             fill = awarded
+             )
+         ) +
+  geom_bar()
+```
 
-
-<br>
-
-By locale category (average grant value).
-
-
-
-![](Final-Product_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 <br>
 
@@ -456,21 +283,28 @@ By IRS income category (total value of grants). 92 (15%) awarded institutions ar
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 <br>
 
+By income (awarded vs not awarded).
 
 
+```r
+# plot of number of grants
+data %>%
+  ggplot(aes(x = INCOMECD15,
+             fill = awarded
+             )
+         ) +
+  geom_bar()
+```
 
+![](Final-Product_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 <br>
 
-By IRS income category (average grant value).
-
-
-
-![](Final-Product_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+------------------------------------------------------------------------
 
 <br>
 
@@ -481,7 +315,7 @@ Institutions that did not receive any grants.
 
 ```r
 data_not_awarded <- data %>%
-  filter(funds == 0)
+  filter(awarded == FALSE)
 ```
 
 <br>
@@ -504,7 +338,7 @@ By discipline.
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 <br>
 
@@ -512,7 +346,7 @@ By state.
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 <br>
 
@@ -520,7 +354,7 @@ By locale category. 30 (0.4%) institutions are missing values for this variable.
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-44-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 <br>
 
@@ -528,13 +362,21 @@ By income. 2,330 (35%) institutions are missing values for this variable. Those 
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-46-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+
+<br>
+
+------------------------------------------------------------------------
 
 <br>
 
 ### Correlation to other socio-economic criteria
 
 -   Use zip codes to compare to low-income areas (census bureau?)
+
+<br>
+
+------------------------------------------------------------------------
 
 <br>
 
@@ -548,9 +390,13 @@ By income. 2,330 (35%) institutions are missing values for this variable. Those 
 
 <br>
 
+------------------------------------------------------------------------
+
+<br>
+
 ### Footnotes
 
-1.  Placeholder
+1.  I don't know why the institutions did not receive a grant.
 
 <br>
 

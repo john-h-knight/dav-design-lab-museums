@@ -21,7 +21,7 @@ options("scipen" = 999)
 
 <br>
 
-### Intro
+------------------------------------------------------------------------
 
 The Institute of Museum and Library Services (IMLS) is an independent agency of the federal government on a mission to, "advance, support, and empower America's museums libraries, and related organizations through grantmaking, research, and policy development."
 
@@ -29,13 +29,15 @@ The IMLS maintains a list of museums in the US in a set of files called the Muse
 
 The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
 
-### Summary
+Here is a summary.
 
 -   Placeholder
 
 -   Placeholder
 
 -   Placeholder
+
+------------------------------------------------------------------------
 
 <br>
 
@@ -43,7 +45,7 @@ The IMLS also makes available data regarding the grants they award to these inst
 
 For this project I'm going to use the following packages.
 
-```{r message=FALSE}
+```{r include=FALSE}
 
 library(tidyverse)
 ```
@@ -68,7 +70,7 @@ The next step is to import the data into RStudio. The first file is File 1 from 
 
 File 2 contains "uncategorized or general museums" and File 3 is "historical societies, historic preservation". The discipline variable will be another way to analyze the grant data.
 
-```{r message=FALSE, warning=FALSE}
+```{r include=FALSE}
 
 # import MDF File 1 (v2), format select columns
 data_museums_raw <- read_csv("MuseumFile2018_File1_Nulls v2.csv", 
@@ -116,7 +118,7 @@ data_museums <- data_museums_raw %>%
 
 The second file contains data on all grants awarded to museums by the IMLS.
 
-```{r message=FALSE, warning=FALSE}
+```{r include=FALSE}
 
 # import grant data (v2)
 data_grants_raw <- read_csv("awarded-grants-2023-04-01 v2.csv")
@@ -136,7 +138,7 @@ data_grants <- data_grants_raw %>%
 
 In order to breakdown the grant data by multiple criteria I need to join the two files together into one dataset.
 
-```{r}
+```{r include=FALSE}
 
 # join requires the same case for character strings
 data_museums$COMMONNAME <- tolower(data_museums$COMMONNAME)
@@ -155,7 +157,7 @@ data_joined <- data_museums %>%
 
 What matched?
 
-```{r}
+```{r include=FALSE}
 
 data_joined %>%
   filter(!is.na(COMMONNAME),
@@ -180,7 +182,7 @@ data_joined %>%
 
 What didn't match?
 
-```{r}
+```{r include=FALSE}
 
 data_joined %>%
   filter(is.na(COMMONNAME)) %>%
@@ -213,79 +215,43 @@ A grant may not match with an institution for several reasons:
 
 I suspect that #1 is the largest contributing factor. File 1 contains 7,429 entries while File 2 and 3 contain 22,742 together.
 
+------------------------------------------------------------------------
+
 <br>
 
 ### Where the grants went over the last 10 years
 
-<br>
+```{r include=FALSE}
 
-Institutions that received grants.
-
-```{r}
-
+# create data for use as data_awarded and data_not_awarded
 data <- data_joined %>%
   filter(!is.na(COMMONNAME)) %>%    # remove awarded institutions not in the museum list
   replace_na(list(year = 9999,      # replace NAs with values for analysis
                   funds = 0
                   )
              ) %>%
+  mutate(awarded = if_else(funds > 0, TRUE, FALSE)) %>%
   filter(year >= 2013)              # filter for last 10 years (2013-2022)
+```
+
+```{r}
 
 # filter for institutions that received grants
 data_awarded <- data %>%
-  filter(funds != 0)
+  filter(awarded == TRUE)
 ```
 
 <br>
 
-How many grants did the IMLS award over the last 10 years?
-
-```{r}
-
-# count
-data_awarded %>%
-  summarize(total_count = n())
-
-# plot of count each year
-data_awarded %>%
-  group_by(year) %>%
-  count() %>%
-  ggplot(aes(x = year,
-             y = n
-             )
-         ) +
-  geom_line()
-```
-
-<br>
-
-What's the total value of those grants?
-
-```{r}
-
-# total
-data_awarded %>%
-  summarize(total = sum(funds))
-
-# plot of total by year
-data_awarded %>%
-  group_by(year) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = year,
-             y = funds
-             )
-         ) +
-  geom_line()
-```
-
-<br>
-
-What was the average grant amount?
+How many grants did the IMLS award over the last 10 years and what was the total and average value?
 
 ```{r}
 
 data_awarded %>%
-  summarize(average = mean(funds))
+  summarize(grants = n(),
+            total_funds = sum(funds),
+            mean_award = mean(funds)
+            )
 ```
 
 <br>
@@ -330,7 +296,7 @@ data_awarded %>%
   arrange(-funds)
 ```
 
-```{r echo=FALSE}
+```{r}
 
 # plot of absolute funds
 data_awarded %>%
@@ -346,90 +312,22 @@ data_awarded %>%
 
 <br>
 
-```{r eval=FALSE, include=FALSE}
+By discipline (awarded vs not awarded).
 
-# number of grants
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r eval=FALSE, include=FALSE}
+```{r}
 
 # plot of number of grants
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(DISCIPL, -grants),
-             y = grants,
-             fill = DISCIPL
+data %>%
+  ggplot(aes(x = DISCIPL,
+             fill = awarded
              )
          ) +
-  geom_col()
+  geom_bar()
 ```
 
 <br>
 
-By discipline (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE}
-
-# plot of average grant
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(DISCIPL, -average_grant),
-             y = average_grant,
-             fill = DISCIPL
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-By state (total value of grants).
-
-```{r eval=FALSE, include=FALSE}
-
-# absolute funds
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds)) %>%
-  arrange(-funds)
-```
-
-```{r echo=FALSE, fig.height=8}
-
-# plot of absolute funds
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(state, funds),
-             y = funds
-             )
-         ) +
-  geom_col() +
-  coord_flip()
-```
-
-<br>
+By state (as map, percent of museums awarded).
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -438,53 +336,6 @@ data_awarded %>%
   group_by(state) %>%
   summarize(grants = n()) %>%
   arrange(-grants)
-```
-
-```{r eval=FALSE, fig.height=8, include=FALSE}
-
-# plot of number of grants
-data_awarded %>%
-  group_by(state) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(state, grants),
-             y = grants
-             )
-         ) +
-  geom_col() +
-  coord_flip()
-```
-
-<br>
-
-By state (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE, fig.height=8}
-
-# plot of average grant
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(state, average_grant),
-             y = average_grant
-             )
-         ) +
-  geom_col() +
-  coord_flip()
 ```
 
 <br>
@@ -515,58 +366,17 @@ data_awarded %>%
 
 <br>
 
-```{r eval=FALSE, include=FALSE}
+By locale (awarded vs not awarded).
 
-# number of grants
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r eval=FALSE, include=FALSE}
+```{r}
 
 # plot of number of grants
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(LOCALE4, -grants),
-             y = grants
+data %>%
+  ggplot(aes(x = LOCALE4,
+             fill = awarded
              )
          ) +
-  geom_col()
-```
-
-<br>
-
-By locale category (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE}
-
-# plot of average grant
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(LOCALE4, -average_grant),
-             y = average_grant
-             )
-         ) +
-  geom_col()
+  geom_bar()
 ```
 
 <br>
@@ -599,63 +409,22 @@ data_awarded %>%
 
 <br>
 
-```{r eval=FALSE, include=FALSE}
+By income (awarded vs not awarded).
 
-# number of grants
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r eval=FALSE, include=FALSE}
+```{r}
 
 # plot of number of grants
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -grants),
-             y = grants
+data %>%
+  ggplot(aes(x = INCOMECD15,
+             fill = awarded
              )
          ) +
-  geom_col()
+  geom_bar()
 ```
 
 <br>
 
-By IRS income category (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE}
-
-# plot of average grant
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -average_grant),
-             y = average_grant
-             )
-         ) +
-  geom_col()
-```
+------------------------------------------------------------------------
 
 <br>
 
@@ -666,7 +435,7 @@ Institutions that did not receive any grants.
 ```{r}
 
 data_not_awarded <- data %>%
-  filter(funds == 0)
+  filter(awarded == FALSE)
 ```
 
 <br>
@@ -791,9 +560,17 @@ data_awarded %>%
 
 <br>
 
+------------------------------------------------------------------------
+
+<br>
+
 ### Correlation to other socio-economic criteria
 
 -   Use zip codes to compare to low-income areas (census bureau?)
+
+<br>
+
+------------------------------------------------------------------------
 
 <br>
 
@@ -804,6 +581,10 @@ data_awarded %>%
 -   IMLS should direct more funding to areas that need it
 
 -   People can donate to the least likely museums
+
+<br>
+
+------------------------------------------------------------------------
 
 <br>
 
