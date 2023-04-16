@@ -157,6 +157,10 @@ data_joined <- data_museums %>%
 
 What matched?
 
+-   Number of grants = 2,354
+
+-   Value of grants = \$266M
+
 ```{r include=FALSE}
 
 data_joined %>%
@@ -174,13 +178,11 @@ data_joined %>%
 
 <br>
 
--   Number of grants = 2,354
-
--   Value of grants = \$266M
-
-<br>
-
 What didn't match?
+
+-   Number of grants = 8,213
+
+-   Value of grants = \$701M
 
 ```{r include=FALSE}
 
@@ -194,12 +196,6 @@ data_joined %>%
             total_funds = sum(funds)
             )
 ```
-
-<br>
-
--   Number of grants = 8,213
-
--   Value of grants = \$701M
 
 <br>
 
@@ -234,9 +230,29 @@ data <- data_joined %>%
   filter(year >= 2013)              # filter for last 10 years (2013-2022)
 ```
 
+```{r eval=FALSE, include=FALSE}
+
+data_test <- data_joined %>%
+  filter(!is.na(COMMONNAME)) %>%    # remove awarded institutions not in the museum list
+  replace_na(list(year = 9999,      # replace NAs with values for analysis
+                  funds = 0
+                  )
+             ) %>%
+  filter(year >= 2013) %>%
+  group_by(COMMONNAME) %>%
+  summarize(sum_funds = sum(funds))
+
+
+data_test_joined <- data_museums %>%
+  full_join(data_test, 
+            by = c("COMMONNAME" = "COMMONNAME"), 
+            keep = TRUE
+            )
+```
+
 ```{r}
 
-# filter for institutions that received grants
+# filter for institutions that received grants (includes multiples)
 data_awarded <- data %>%
   filter(awarded == TRUE)
 ```
@@ -269,12 +285,15 @@ data_awarded %>%
 
 Did any institutions win multiple grants?
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 # filter for institutions that received more than 1 grant
 data_awarded %>%
   count(institution, sort = TRUE) %>%
   filter(n > 1)
+```
+
+```{r}
 
 # plot of number of grants
 data_awarded %>%
@@ -285,7 +304,7 @@ data_awarded %>%
 
 <br>
 
-By discipline (total value of grants).
+Total value of grants by discipline.
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -312,7 +331,9 @@ data_awarded %>%
 
 <br>
 
-By discipline (awarded vs not awarded).
+Awarded vs not awarded by discipline.
+
+NEED TO FIX. This is overstating the number of institutions awarded. For FALSE, there is only 1 institution. But for TRUE, there are multiples of institutions because they received multiple grants. So this isn't an accurate comparison of institutions that were awarded and those that weren't. Same applies to the other variables.
 
 ```{r}
 
@@ -327,20 +348,41 @@ data %>%
 
 <br>
 
-By state (as map, percent of museums awarded).
+Breakdown by state.
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 
 # number of grants
 data_awarded %>%
   group_by(state) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
+  summarize(grants = n(),
+            total_funds = sum(funds),
+            mean_award = mean(funds)
+            ) %>%
+  arrange(-total_funds)
+```
+
+```{r eval=FALSE, include=FALSE}
+
+# wrangle for potential map
+data_states <- data %>%
+  group_by(ADSTATE) %>%
+  count(COMMONNAME, awarded) %>%
+  summarize(proportion = mean(awarded)*100) %>%
+  ggplot(aes(x = proportion)) +
+  geom_histogram(binwidth = 1)
+
+data_states
+
+data_states <- data %>%
+  group_by(ADSTATE) %>%
+  summarize(test = mean(awarded)) %>%
+  mutate(percent = test * 100)
 ```
 
 <br>
 
-By locale category, i.e. city, suburb, town, rural (total value of grants).
+Total value of grants by locale category (city, suburb, town, rural).
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -357,7 +399,7 @@ data_awarded %>%
 data_awarded %>%
   group_by(LOCALE4) %>%
   summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(LOCALE4, -funds),
+  ggplot(aes(x = LOCALE4,
              y = funds
              )
          ) +
@@ -366,12 +408,21 @@ data_awarded %>%
 
 <br>
 
-By locale (awarded vs not awarded).
+Awarded vs not awarded by locale. 30 (0.4%) institutions are missing values for this variable. Those institutions are not included in the graph below.
+
+```{r eval=FALSE, include=FALSE}
+
+# count number of NAs for disclaimer
+data %>%
+  group_by(LOCALE4) %>%
+  summarize(count = n())
+```
 
 ```{r}
 
 # plot of number of grants
 data %>%
+  filter(!is.na(LOCALE4)) %>%
   ggplot(aes(x = LOCALE4,
              fill = awarded
              )
@@ -381,7 +432,7 @@ data %>%
 
 <br>
 
-By IRS income category (total value of grants). 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
+Total value of grants by IRS income category. 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -390,7 +441,10 @@ data_awarded %>%
   filter(!is.na(INCOMECD15)) %>%
   group_by(INCOMECD15) %>%
   summarize(funds = sum(funds)) %>%
-  arrange(-funds)
+  add_row(INCOMECD15 = as.factor(1),
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15)
 ```
 
 ```{r echo=FALSE}
@@ -400,7 +454,10 @@ data_awarded %>%
   filter(!is.na(INCOMECD15)) %>%
   group_by(INCOMECD15) %>%
   summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -funds),
+  add_row(INCOMECD15 = as.factor(1),
+          funds = 0
+          ) %>%
+  ggplot(aes(x = INCOMECD15,
              y = funds
              )
          ) +
@@ -409,7 +466,7 @@ data_awarded %>%
 
 <br>
 
-By income (awarded vs not awarded).
+Awarded vs not awarded by income.
 
 ```{r}
 

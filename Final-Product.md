@@ -1,7 +1,7 @@
 ---
 title: 'Final Product'
 author: "John Knight"
-date: "2023-04-14"
+date: "2023-04-16"
 output: 
   html_document: 
     keep_md: yes
@@ -81,25 +81,21 @@ In order to breakdown the grant data by multiple criteria I need to join the two
 
 What matched?
 
-
-
-<br>
-
 -   Number of grants = 2,354
 
 -   Value of grants = \$266M
+
+
 
 <br>
 
 What didn't match?
 
-
-
-<br>
-
 -   Number of grants = 8,213
 
 -   Value of grants = \$701M
+
+
 
 <br>
 
@@ -124,8 +120,10 @@ I suspect that #1 is the largest contributing factor. File 1 contains 7,429 entr
 
 
 
+
+
 ```r
-# filter for institutions that received grants
+# filter for institutions that received grants (includes multiples)
 data_awarded <- data %>%
   filter(awarded == TRUE)
 ```
@@ -173,29 +171,7 @@ data_awarded %>%
 Did any institutions win multiple grants?
 
 
-```r
-# filter for institutions that received more than 1 grant
-data_awarded %>%
-  count(institution, sort = TRUE) %>%
-  filter(n > 1)
-```
 
-```
-## # A tibble: 142 × 2
-##    institution                            n
-##    <chr>                              <int>
-##  1 american museum of natural history    12
-##  2 denver art museum                     11
-##  3 long island children's museum          9
-##  4 boston children's museum               8
-##  5 children's museum of indianapolis      8
-##  6 morton arboretum                       8
-##  7 yerba buena center for the arts        8
-##  8 baltimore museum of art                7
-##  9 children's museum of pittsburgh        7
-## 10 lincoln park zoo                       7
-## # ℹ 132 more rows
-```
 
 ```r
 # plot of number of grants
@@ -205,11 +181,11 @@ data_awarded %>%
   geom_bar()
 ```
 
-![](Final-Product_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 <br>
 
-By discipline (total value of grants).
+Total value of grants by discipline.
 
 
 
@@ -227,11 +203,11 @@ data_awarded %>%
   geom_col()
 ```
 
-![](Final-Product_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 <br>
 
-By discipline (awarded vs not awarded).
+Awarded vs not awarded by discipline.
 
 
 ```r
@@ -244,42 +220,46 @@ data %>%
   geom_bar()
 ```
 
-![](Final-Product_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 <br>
 
-By state (as map, percent of museums awarded).
-
-
-
-<br>
-
-By locale category, i.e. city, suburb, town, rural (total value of grants).
-
-
-
-![](Final-Product_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
-
-<br>
-
-By locale (awarded vs not awarded).
+Breakdown by state.
 
 
 ```r
-# plot of number of grants
-data %>%
-  ggplot(aes(x = LOCALE4,
-             fill = awarded
-             )
-         ) +
-  geom_bar()
+# number of grants
+data_awarded %>%
+  group_by(state) %>%
+  summarize(grants = n(),
+            total_funds = sum(funds),
+            mean_award = mean(funds)
+            ) %>%
+  arrange(-total_funds)
 ```
 
-![](Final-Product_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+```
+## # A tibble: 49 × 4
+##    state grants total_funds mean_award
+##    <chr>  <int>       <dbl>      <dbl>
+##  1 NY        88    19358231    219980.
+##  2 IL        54    10902802    201904.
+##  3 CA        51     8054269    157927.
+##  4 WA        38     6640223    174743.
+##  5 PA        22     4061968    184635.
+##  6 TN        19     3700216    194748.
+##  7 MD        26     3489221    134201.
+##  8 MA        18     3366356    187020.
+##  9 OH        24     3154915    131455.
+## 10 CO        18     3059116    169951.
+## # ℹ 39 more rows
+```
+
+
 
 <br>
 
-By IRS income category (total value of grants). 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
+Total value of grants by locale category (city, suburb, town, rural).
 
 
 
@@ -287,7 +267,35 @@ By IRS income category (total value of grants). 92 (15%) awarded institutions ar
 
 <br>
 
-By income (awarded vs not awarded).
+Awarded vs not awarded by locale. 30 (0.4%) institutions are missing values for this variable. Those institutions are not included in the graph below.
+
+
+
+
+```r
+# plot of number of grants
+data %>%
+  filter(!is.na(LOCALE4)) %>%
+  ggplot(aes(x = LOCALE4,
+             fill = awarded
+             )
+         ) +
+  geom_bar()
+```
+
+![](Final-Product_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+
+<br>
+
+Total value of grants by IRS income category. 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
+
+
+
+![](Final-Product_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+<br>
+
+Awarded vs not awarded by income.
 
 
 ```r
@@ -300,7 +308,7 @@ data %>%
   geom_bar()
 ```
 
-![](Final-Product_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 <br>
 
@@ -338,7 +346,7 @@ By discipline.
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 <br>
 
@@ -346,7 +354,7 @@ By state.
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 <br>
 
@@ -354,7 +362,7 @@ By locale category. 30 (0.4%) institutions are missing values for this variable.
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
 <br>
 
@@ -362,7 +370,7 @@ By income. 2,330 (35%) institutions are missing values for this variable. Those 
 
 
 
-![](Final-Product_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](Final-Product_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 <br>
 
