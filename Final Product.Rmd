@@ -528,7 +528,7 @@ data_not_awarded %>%
 ```{r echo=FALSE}
 
 # plot of count
-data_awarded %>%
+data_not_awarded %>%
   filter(!is.na(INCOMECD15)) %>%
   group_by(INCOMECD15) %>%
   summarize(count = n()) %>%

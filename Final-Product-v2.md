@@ -1,17 +1,13 @@
 ---
 title: 'Final Product'
 author: "John Knight"
-date: "`r Sys.Date()`"
+date: "2023-04-17"
 output: 
   html_document: 
     keep_md: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 
-options("scipen" = 999)
-```
 
 <br>
 
@@ -43,72 +39,14 @@ Here is a summary.
 
 ### Where the grants went over the last 10 years
 
-```{r include=FALSE}
 
-library(tidyverse)
-
-# import grant data (v2)
-data_grants_raw <- read_csv("awarded-grants-2023-04-01 v2.csv")
-
-# select columns to work with
-data_grants <- data_grants_raw %>%
-  select(institution,
-         city,
-         state,
-         year,
-         funds,
-         program,
-         `log number`
-         )
-
-# import MDF File 1 (v2), format select columns
-data_museums_raw <- read_csv("MuseumFile2018_File1_Nulls v2.csv", 
-                             col_types = cols(DISCIPL = col_factor(levels = c("ART", "BOT", 
-                                                                              "CMU", "HST", 
-                                                                              "NAT", "SCI", 
-                                                                              "ZAW")), 
-                                              TAXPER15 = col_date(format = "%Y%m"),
-                                              INCOMECD15 = col_factor(levels = c("0", "1", 
-                                                                                 "2", "3", 
-                                                                                 "4", "5", 
-                                                                                 "6", "7",
-                                                                                 "8", "9")),
-                                              AAMREG = col_factor(levels = c("1", "2", "3",
-                                                                             "4", "5", "6")),
-                                              BEAREG = col_factor(levels = c("1", "2", "3",
-                                                                             "4", "5", "6",
-                                                                             "7", "8")),
-                                              LOCALE4 = col_factor(levels = c("1", "2", "3", 
-                                                                              "4"))
-                                              )
-                             )
-
-# select columns to work with
-data_museums <- data_museums_raw %>%
-  select(COMMONNAME,
-         DISCIPL,
-         INCOMECD15
-         )
-
-# join requires the same case for character strings
-data_grants$institution <- tolower(data_grants$institution)
-data_museums$COMMONNAME <- tolower(data_museums$COMMONNAME)
-
-# join by name, inner join retains only matching rows, and filter for last 10 years
-data <- data_grants %>%
-  inner_join(data_museums,
-            by = c("institution" = "COMMONNAME"),
-            relationship = "many-to-many"
-            ) %>%
-  filter(year >= 2013)
-```
 
 <br>
 
 How many grants did the IMLS award over the last 10 years and what was the total and average value?
 
-```{r}
 
+```r
 data %>%
   summarize(grants = n(),
             total_funds = sum(funds),
@@ -116,23 +54,37 @@ data %>%
             )
 ```
 
+```
+## # A tibble: 1 × 3
+##   grants total_funds mean_award
+##    <int>       <dbl>      <dbl>
+## 1    628   101674483    161902.
+```
+
 <br>
 
 How many different institutions won grants?
 
-```{r}
 
+```r
 data %>%
   count(institution, sort = TRUE) %>%
   summarize(institutions = n())
+```
+
+```
+## # A tibble: 1 × 1
+##   institutions
+##          <int>
+## 1          254
 ```
 
 <br>
 
 Did any institutions win multiple grants?
 
-```{r}
 
+```r
 # plot of number of grants
 data %>%
   count(institution) %>%
@@ -140,12 +92,14 @@ data %>%
   geom_bar()
 ```
 
+![](Final-Product-v2_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
 <br>
 
 By IMLS program.
 
-```{r}
 
+```r
 data %>%
   group_by(program) %>%
   summarize(count = n(),
@@ -154,21 +108,30 @@ data %>%
   arrange(-funds)
 ```
 
+```
+## # A tibble: 10 × 3
+##    program                                                          count  funds
+##    <chr>                                                            <int>  <dbl>
+##  1 Museums for America                                                465 7.06e7
+##  2 National Leadership Grants - Museums                                37 1.63e7
+##  3 Museums Empowered: Professional Development Opportunities for M…    53 7.97e6
+##  4 Inspire! Grants for Small Museums                                   46 2.14e6
+##  5 Maker/STEM Education Support for 21st Century Community Learnin…     1 1.84e6
+##  6 Save America's Treasures                                             8 1.19e6
+##  7 Museum Grants for African American History and Culture               7 6.87e5
+##  8 National Leadership Grants - Libraries                               7 3.82e5
+##  9 Building a National Network of Museums and Libraries for School…     1 3.5 e5
+## 10 Native American/Native Hawaiian Museum Services                      3 2.39e5
+```
+
 <br>
 
 Total value of grants by discipline.
 
-```{r eval=FALSE, include=FALSE}
 
-# absolute funds
-data %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds)) %>%
-  arrange(-funds)
-```
 
-```{r}
 
+```r
 # plot of absolute funds
 data %>%
   group_by(DISCIPL) %>%
@@ -181,12 +144,14 @@ data %>%
   geom_col()
 ```
 
+![](Final-Product-v2_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
 <br>
 
 Breakdown by state.
 
-```{r}
 
+```r
 # number of grants
 data %>%
   group_by(state) %>%
@@ -197,42 +162,33 @@ data %>%
   arrange(-total_funds)
 ```
 
+```
+## # A tibble: 49 × 4
+##    state grants total_funds mean_award
+##    <chr>  <int>       <dbl>      <dbl>
+##  1 NY        88    19358231    219980.
+##  2 IL        54    10902802    201904.
+##  3 CA        51     8054269    157927.
+##  4 WA        38     6640223    174743.
+##  5 PA        22     4061968    184635.
+##  6 TN        19     3700216    194748.
+##  7 MD        26     3489221    134201.
+##  8 MA        18     3366356    187020.
+##  9 OH        24     3154915    131455.
+## 10 CO        18     3059116    169951.
+## # ℹ 39 more rows
+```
+
 <br>
 
 Total value of grants by IRS income category. 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
 
-```{r eval=FALSE, include=FALSE}
 
-# absolute funds
-data %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds)) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          funds = 0
-          ) %>%
-  arrange(INCOMECD15)
-```
 
-```{r echo=FALSE}
+![](Final-Product-v2_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
-# plot of absolute funds
-data %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds)) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          funds = 0
-          ) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = funds
-             )
-         ) +
-  geom_col()
-```
 
-```{r}
-
+```r
 # plot of count
 data %>%
   filter(!is.na(INCOMECD15)) %>%
@@ -248,6 +204,8 @@ data %>%
   geom_col()
 ```
 
+![](Final-Product-v2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
 <br>
 
 ------------------------------------------------------------------------
@@ -258,8 +216,8 @@ data %>%
 
 <br>
 
-```{r}
 
+```r
 data_not_awarded <- data_museums %>%
   full_join(data_grants, 
             by = c("COMMONNAME" = "institution"), 
@@ -280,32 +238,24 @@ data_not_awarded <- data_museums %>%
 
 How many institutions did not win an award over the last 10 years?
 
-```{r}
 
+```r
 data_not_awarded %>%
   summarize(count = n())
+```
+
+```
+## # A tibble: 1 × 1
+##   count
+##   <int>
+## 1  6726
 ```
 
 <br>
 
 By income. 2,330 (35%) institutions are missing values for this variable. Those institutions are not included in the graph below.
 
-```{r echo=FALSE}
-
-# plot of count
-data_not_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(count = n()) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          count = 0
-          ) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col()
-```
+![](Final-Product-v2_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 <br>
 
@@ -356,16 +306,4 @@ Placeholder.
 
 <br>
 
-```{r eval=FALSE, include=FALSE}
 
-# SANDBOX
-
-# unknown if museums that did not receive awards applied for grants
-
-# institutions with more revenue/income can pay for staff who apply for grants
-
-# impact of private/other funding on applying for grants, winning
-
-
-# group or stacked col chart of awarded/not awarded by variables
-```
