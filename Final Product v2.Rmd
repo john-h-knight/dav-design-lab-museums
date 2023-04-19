@@ -233,7 +233,27 @@ data %>%
 
 ```{r}
 
-# plot of count
+# plot of count, with multiples removed
+data %>%
+  filter(!is.na(INCOMECD15)) %>%
+  group_by(institution) %>%
+  slice_head() %>%
+  ungroup() %>%
+  group_by(INCOMECD15) %>%
+  summarize(count = n()) %>%
+  add_row(INCOMECD15 = as.factor(1),
+          count = 0
+          ) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col()
+```
+
+```{r eval=FALSE, include=FALSE}
+
+# plot of count, with multiples
 data %>%
   filter(!is.na(INCOMECD15)) %>%
   group_by(INCOMECD15) %>%
