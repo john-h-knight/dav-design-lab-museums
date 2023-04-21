@@ -1,7 +1,7 @@
 ---
 title: 'Final Product'
 author: "John Knight"
-date: "2023-04-17"
+date: "2023-04-21"
 output: 
   html_document: 
     keep_md: yes
@@ -33,11 +33,13 @@ Here is a summary.
 
 -   Placeholder
 
+<br>
+
 ------------------------------------------------------------------------
 
 <br>
 
-### Where the grants went over the last 10 years
+### Total grants and programs
 
 
 
@@ -60,6 +62,45 @@ data %>%
 ##    <int>       <dbl>      <dbl>
 ## 1    628   101674483    161902.
 ```
+
+<br>
+
+Grants by program.
+
+
+```r
+data %>%
+  group_by(program) %>%
+  summarize(count = n(),
+            total_funds = sum(funds)
+            ) %>%
+  arrange(-total_funds) %>%
+  mutate(proportion = (total_funds / sum(total_funds))*100)
+```
+
+```
+## # A tibble: 10 × 4
+##    program                                          count total_funds proportion
+##    <chr>                                            <int>       <dbl>      <dbl>
+##  1 Museums for America                                465    70578719     69.4  
+##  2 National Leadership Grants - Museums                37    16292260     16.0  
+##  3 Museums Empowered: Professional Development Opp…    53     7966050      7.83 
+##  4 Inspire! Grants for Small Museums                   46     2141872      2.11 
+##  5 Maker/STEM Education Support for 21st Century C…     1     1843000      1.81 
+##  6 Save America's Treasures                             8     1193892      1.17 
+##  7 Museum Grants for African American History and …     7      687040      0.676
+##  8 National Leadership Grants - Libraries               7      382216      0.376
+##  9 Building a National Network of Museums and Libr…     1      350000      0.344
+## 10 Native American/Native Hawaiian Museum Services      3      239434      0.235
+```
+
+<br>
+
+------------------------------------------------------------------------
+
+<br>
+
+### What institutions received grants?
 
 <br>
 
@@ -92,59 +133,7 @@ data %>%
   geom_bar()
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
-
-<br>
-
-By IMLS program.
-
-
-```r
-data %>%
-  group_by(program) %>%
-  summarize(count = n(),
-            funds = sum(funds)
-            ) %>%
-  arrange(-funds)
-```
-
-```
-## # A tibble: 10 × 3
-##    program                                                          count  funds
-##    <chr>                                                            <int>  <dbl>
-##  1 Museums for America                                                465 7.06e7
-##  2 National Leadership Grants - Museums                                37 1.63e7
-##  3 Museums Empowered: Professional Development Opportunities for M…    53 7.97e6
-##  4 Inspire! Grants for Small Museums                                   46 2.14e6
-##  5 Maker/STEM Education Support for 21st Century Community Learnin…     1 1.84e6
-##  6 Save America's Treasures                                             8 1.19e6
-##  7 Museum Grants for African American History and Culture               7 6.87e5
-##  8 National Leadership Grants - Libraries                               7 3.82e5
-##  9 Building a National Network of Museums and Libraries for School…     1 3.5 e5
-## 10 Native American/Native Hawaiian Museum Services                      3 2.39e5
-```
-
-<br>
-
-Total value of grants by discipline.
-
-
-
-
-```r
-# plot of absolute funds
-data %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(DISCIPL, -funds),
-             y = funds,
-             fill = DISCIPL
-             )
-         ) +
-  geom_col()
-```
-
-![](Final-Product-v2_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 <br>
 
@@ -181,6 +170,36 @@ data %>%
 
 <br>
 
+Total value of grants by discipline.
+
+
+
+
+```r
+# plot of absolute funds
+data %>%
+  group_by(DISCIPL) %>%
+  summarize(funds = sum(funds)) %>%
+  ggplot(aes(x = reorder(DISCIPL, -funds),
+             y = funds,
+             fill = DISCIPL
+             )
+         ) +
+  geom_col()
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+<br>
+
+------------------------------------------------------------------------
+
+<br>
+
+### Closer look at grants from \$\$ perspective
+
+<br>
+
 Total value of grants by IRS income category. 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
 
 
@@ -189,9 +208,12 @@ Total value of grants by IRS income category. 92 (15%) awarded institutions are 
 
 
 ```r
-# plot of count
+# plot of count, with multiples removed
 data %>%
   filter(!is.na(INCOMECD15)) %>%
+  group_by(institution) %>%
+  slice_head() %>%
+  ungroup() %>%
   group_by(INCOMECD15) %>%
   summarize(count = n()) %>%
   add_row(INCOMECD15 = as.factor(1),
@@ -205,6 +227,8 @@ data %>%
 ```
 
 ![](Final-Product-v2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
 
 <br>
 
@@ -255,7 +279,7 @@ data_not_awarded %>%
 
 By income. 2,330 (35%) institutions are missing values for this variable. Those institutions are not included in the graph below.
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 <br>
 

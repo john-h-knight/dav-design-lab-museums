@@ -37,11 +37,13 @@ Here is a summary.
 
 -   Placeholder
 
+<br>
+
 ------------------------------------------------------------------------
 
 <br>
 
-### Where the grants went over the last 10 years
+### Total grants and programs
 
 ```{r include=FALSE}
 
@@ -118,6 +120,31 @@ data %>%
 
 <br>
 
+Funds over time.
+
+```{r}
+
+# plot of total funds each year
+data %>%
+  group_by(year) %>%
+  summarize(funds = sum(funds)) %>%
+  ggplot(aes(x = year,
+             y = funds
+             )
+         ) +
+  geom_line()
+```
+
+<br>
+
+------------------------------------------------------------------------
+
+<br>
+
+### What institutions received grants?
+
+<br>
+
 How many different institutions won grants?
 
 ```{r}
@@ -142,16 +169,18 @@ data %>%
 
 <br>
 
-By IMLS program.
+Breakdown by state. Map?
 
 ```{r}
 
+# number of grants
 data %>%
-  group_by(program) %>%
-  summarize(count = n(),
-            funds = sum(funds)
+  group_by(state) %>%
+  summarize(grants = n(),
+            total_funds = sum(funds),
+            mean_award = mean(funds)
             ) %>%
-  arrange(-funds)
+  arrange(-total_funds)
 ```
 
 <br>
@@ -183,19 +212,11 @@ data %>%
 
 <br>
 
-Breakdown by state.
+------------------------------------------------------------------------
 
-```{r}
+<br>
 
-# number of grants
-data %>%
-  group_by(state) %>%
-  summarize(grants = n(),
-            total_funds = sum(funds),
-            mean_award = mean(funds)
-            ) %>%
-  arrange(-total_funds)
-```
+### What about in terms of income?
 
 <br>
 
@@ -231,50 +252,13 @@ data %>%
   geom_col()
 ```
 
-```{r}
-
-# plot of count, with multiples removed
-data %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(institution) %>%
-  slice_head() %>%
-  ungroup() %>%
-  group_by(INCOMECD15) %>%
-  summarize(count = n()) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          count = 0
-          ) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col()
-```
-
-```{r eval=FALSE, include=FALSE}
-
-# plot of count, with multiples
-data %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(count = n()) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          count = 0
-          ) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col()
-```
-
 <br>
 
 ------------------------------------------------------------------------
 
 <br>
 
-### Unpack findings from above for no grants
+### Why did more grants go to institutions with higher incomes?
 
 <br>
 
@@ -312,19 +296,104 @@ By income. 2,330 (35%) institutions are missing values for this variable. Those 
 
 ```{r echo=FALSE}
 
-# plot of count
-data_not_awarded %>%
+# count not awarded
+data_not_awarded_count <- data_not_awarded %>%
   filter(!is.na(INCOMECD15)) %>%
+  group_by(INCOMECD15) %>%
+  summarize(count = n()) %>%
+  mutate(awarded = FALSE)
+
+# print
+data_not_awarded_count
+```
+
+```{r}
+
+# plot of count not awarded
+data_not_awarded_count %>%
+  ggplot(aes(x = INCOMECD15,
+             y = not_awarded
+             )
+         ) +
+  geom_col()
+```
+
+<br>
+
+```{r}
+
+# count awarded
+data_awarded_count <- data %>%
+  filter(!is.na(INCOMECD15)) %>%
+  group_by(institution) %>%
+  slice_head() %>%
+  ungroup() %>%
   group_by(INCOMECD15) %>%
   summarize(count = n()) %>%
   add_row(INCOMECD15 = as.factor(1),
           count = 0
           ) %>%
+  mutate(awarded = TRUE) %>%
+  arrange(INCOMECD15)
+
+# print
+data_awarded_count
+```
+
+```{r}
+
+# plot of count awarded
+data_awarded_count %>%
   ggplot(aes(x = INCOMECD15,
-             y = count
+             y = awarded
              )
          ) +
   geom_col()
+```
+
+<br>
+
+Combine awarded and not awarded in one chart.
+
+```{r}
+
+data_count <- data_awarded_count %>%
+  bind_rows(data_not_awarded_count)
+```
+
+```{r}
+
+data_count %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count,
+             fill = awarded
+             )
+         ) +
+  geom_col(position = "dodge")
+
+data_count %>%
+  filter(INCOMECD15 != 0) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count,
+             fill = awarded
+             )
+         ) +
+  geom_col(position = "dodge")
+```
+
+<br>
+
+Grants by program.
+
+```{r}
+
+data %>%
+  group_by(program) %>%
+  summarize(count = n(),
+            total_funds = sum(funds)
+            ) %>%
+  arrange(-total_funds) %>%
+  mutate(proportion = (total_funds / sum(total_funds))*100)
 ```
 
 <br>
