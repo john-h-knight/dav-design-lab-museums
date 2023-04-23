@@ -1,7 +1,7 @@
 ---
 title: 'Final Product'
 author: "John Knight"
-date: "2023-04-21"
+date: "2023-04-23"
 output: 
   html_document: 
     keep_md: yes
@@ -65,34 +65,22 @@ data %>%
 
 <br>
 
-Grants by program.
+Funds over time.
 
 
 ```r
+# plot of total funds each year
 data %>%
-  group_by(program) %>%
-  summarize(count = n(),
-            total_funds = sum(funds)
-            ) %>%
-  arrange(-total_funds) %>%
-  mutate(proportion = (total_funds / sum(total_funds))*100)
+  group_by(year) %>%
+  summarize(funds = sum(funds)) %>%
+  ggplot(aes(x = year,
+             y = funds
+             )
+         ) +
+  geom_line()
 ```
 
-```
-## # A tibble: 10 × 4
-##    program                                          count total_funds proportion
-##    <chr>                                            <int>       <dbl>      <dbl>
-##  1 Museums for America                                465    70578719     69.4  
-##  2 National Leadership Grants - Museums                37    16292260     16.0  
-##  3 Museums Empowered: Professional Development Opp…    53     7966050      7.83 
-##  4 Inspire! Grants for Small Museums                   46     2141872      2.11 
-##  5 Maker/STEM Education Support for 21st Century C…     1     1843000      1.81 
-##  6 Save America's Treasures                             8     1193892      1.17 
-##  7 Museum Grants for African American History and …     7      687040      0.676
-##  8 National Leadership Grants - Libraries               7      382216      0.376
-##  9 Building a National Network of Museums and Libr…     1      350000      0.344
-## 10 Native American/Native Hawaiian Museum Services      3      239434      0.235
-```
+![](Final-Product-v2_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 <br>
 
@@ -140,33 +128,10 @@ data %>%
 Breakdown by state.
 
 
-```r
-# number of grants
-data %>%
-  group_by(state) %>%
-  summarize(grants = n(),
-            total_funds = sum(funds),
-            mean_award = mean(funds)
-            ) %>%
-  arrange(-total_funds)
-```
 
-```
-## # A tibble: 49 × 4
-##    state grants total_funds mean_award
-##    <chr>  <int>       <dbl>      <dbl>
-##  1 NY        88    19358231    219980.
-##  2 IL        54    10902802    201904.
-##  3 CA        51     8054269    157927.
-##  4 WA        38     6640223    174743.
-##  5 PA        22     4061968    184635.
-##  6 TN        19     3700216    194748.
-##  7 MD        26     3489221    134201.
-##  8 MA        18     3366356    187020.
-##  9 OH        24     3154915    131455.
-## 10 CO        18     3059116    169951.
-## # ℹ 39 more rows
-```
+
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 <br>
 
@@ -188,7 +153,7 @@ data %>%
   geom_col()
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 <br>
 
@@ -196,7 +161,7 @@ data %>%
 
 <br>
 
-### Closer look at grants from \$\$ perspective
+### What about in terms of income?
 
 <br>
 
@@ -204,31 +169,7 @@ Total value of grants by IRS income category. 92 (15%) awarded institutions are 
 
 
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
-
-
-```r
-# plot of count, with multiples removed
-data %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(institution) %>%
-  slice_head() %>%
-  ungroup() %>%
-  group_by(INCOMECD15) %>%
-  summarize(count = n()) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          count = 0
-          ) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col()
-```
-
-![](Final-Product-v2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
-
-
+![](Final-Product-v2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 <br>
 
@@ -236,7 +177,7 @@ data %>%
 
 <br>
 
-### Unpack findings from above for no grants
+### Why did more grants go to institutions with higher incomes?
 
 <br>
 
@@ -279,7 +220,315 @@ data_not_awarded %>%
 
 By income. 2,330 (35%) institutions are missing values for this variable. Those institutions are not included in the graph below.
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
+```
+## # A tibble: 10 × 3
+##    INCOMECD15 count awarded
+##    <fct>      <int> <lgl>  
+##  1 0           1287 FALSE  
+##  2 1            112 FALSE  
+##  3 2            113 FALSE  
+##  4 3            483 FALSE  
+##  5 4            787 FALSE  
+##  6 5            272 FALSE  
+##  7 6            356 FALSE  
+##  8 7             87 FALSE  
+##  9 8            230 FALSE  
+## 10 9            669 FALSE
+```
+
+
+```r
+# plot of count not awarded
+data_not_awarded_count %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col()
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+<br>
+
+
+```r
+# count awarded
+data_awarded_count <- data %>%
+  filter(!is.na(INCOMECD15)) %>%
+  group_by(institution) %>%
+  slice_head() %>%
+  ungroup() %>%
+  group_by(INCOMECD15) %>%
+  summarize(count = n()) %>%
+  add_row(INCOMECD15 = as.factor(1),
+          count = 0
+          ) %>%
+  mutate(awarded = TRUE) %>%
+  arrange(INCOMECD15)
+
+# print
+data_awarded_count
+```
+
+```
+## # A tibble: 10 × 3
+##    INCOMECD15 count awarded
+##    <fct>      <dbl> <lgl>  
+##  1 0              7 TRUE   
+##  2 1              0 TRUE   
+##  3 2              2 TRUE   
+##  4 3              3 TRUE   
+##  5 4             18 TRUE   
+##  6 5             22 TRUE   
+##  7 6             64 TRUE   
+##  8 7             30 TRUE   
+##  9 8             52 TRUE   
+## 10 9             20 TRUE
+```
+
+
+```r
+# plot of count awarded
+data_awarded_count %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col()
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+<br>
+
+Combine awarded and not awarded in one chart.
+
+
+```r
+data_count <- data_awarded_count %>%
+  bind_rows(data_not_awarded_count)
+```
+
+
+```r
+data_count %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count,
+             fill = awarded
+             )
+         ) +
+  geom_col(position = "dodge")
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+```r
+data_count %>%
+  filter(INCOMECD15 != 0) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count,
+             fill = awarded
+             )
+         ) +
+  geom_col(position = "dodge")
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+
+<br>
+
+------------------------------------------------------------------------
+
+<br>
+
+### Burden of matching funds
+
+<br>
+
+Grants by program.
+
+
+```r
+data %>%
+  group_by(program) %>%
+  summarize(count = n(),
+            total_funds = sum(funds)
+            ) %>%
+  arrange(-total_funds) %>%
+  mutate(proportion = (total_funds / sum(total_funds))*100)
+```
+
+```
+## # A tibble: 10 × 4
+##    program                                          count total_funds proportion
+##    <chr>                                            <int>       <dbl>      <dbl>
+##  1 Museums for America                                465    70578719     69.4  
+##  2 National Leadership Grants - Museums                37    16292260     16.0  
+##  3 Museums Empowered: Professional Development Opp…    53     7966050      7.83 
+##  4 Inspire! Grants for Small Museums                   46     2141872      2.11 
+##  5 Maker/STEM Education Support for 21st Century C…     1     1843000      1.81 
+##  6 Save America's Treasures                             8     1193892      1.17 
+##  7 Museum Grants for African American History and …     7      687040      0.676
+##  8 National Leadership Grants - Libraries               7      382216      0.376
+##  9 Building a National Network of Museums and Libr…     1      350000      0.344
+## 10 Native American/Native Hawaiian Museum Services      3      239434      0.235
+```
+
+<br>
+
+-   Top 3 programs by funding represent 93% of total funds over the last 10 years
+
+-   They require matching funds from non-federal sources
+
+<br>
+
+Median award by program by year, as percentage of that income category.
+
+
+```r
+# test with Museums for America only to start
+# median grant value through Museums for America
+data %>%
+  filter(program == "Museums for America") %>%
+  summarize(median_grant = median(funds)) 
+```
+
+```
+## # A tibble: 1 × 1
+##   median_grant
+##          <dbl>
+## 1       149967
+```
+
+
+```r
+# create plot of income codes
+income_codes <- tibble(
+  code = as.factor(c(0:9)),
+  low = c(0, 1, 10000, 25000, 100000, 500000, 1000000, 5000000, 10000000, 50000000),
+  high = c(0, 9999, 24999, 99999, 499999, 999999, 4999999, 9999999, 49999999, 50000000)
+) %>%
+  mutate(mid = ((high - low)/2) + low,
+         median_grant = 149967,
+         ratio = mid/median_grant,
+         percent = (median_grant/mid) * 100
+         )
+
+income_codes
+```
+
+```
+## # A tibble: 10 × 7
+##    code       low     high       mid median_grant    ratio  percent
+##    <fct>    <dbl>    <dbl>     <dbl>        <dbl>    <dbl>    <dbl>
+##  1 0            0        0        0        149967   0       Inf    
+##  2 1            1     9999     5000        149967   0.0333 2999.   
+##  3 2        10000    24999    17500.       149967   0.117   857.   
+##  4 3        25000    99999    62500.       149967   0.417   240.   
+##  5 4       100000   499999   300000.       149967   2.00     50.0  
+##  6 5       500000   999999   750000.       149967   5.00     20.0  
+##  7 6      1000000  4999999  3000000.       149967  20.0       5.00 
+##  8 7      5000000  9999999  7500000.       149967  50.0       2.00 
+##  9 8     10000000 49999999 30000000.       149967 200.        0.500
+## 10 9     50000000 50000000 50000000        149967 333.        0.300
+```
+
+
+```r
+income_codes %>%
+  filter(code == c(0, 1, 2, 3, 4)) %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+```r
+income_codes %>%
+  filter(code == c(0, 1, 2, 3, 4, 5)) %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+```
+
+```
+## Warning: There were 2 warnings in `filter()`.
+## The first warning was:
+## ℹ In argument: `code == c(0, 1, 2, 3, 4, 5)`.
+## Caused by warning in `==.default`:
+## ! longer object length is not a multiple of shorter object length
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+
+```r
+income_codes %>%
+  filter(code == c(0, 1, 2, 3, 4, 5, 6)) %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+```
+
+```
+## Warning: There were 2 warnings in `filter()`.
+## The first warning was:
+## ℹ In argument: `code == c(0, 1, 2, 3, 4, 5, 6)`.
+## Caused by warning in `==.default`:
+## ! longer object length is not a multiple of shorter object length
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+
+```r
+income_codes %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
+
+
+```r
+# ration of income (mid) to median grant
+income_codes %>%
+  ggplot(aes(x = code,
+             y = ratio
+             )
+         ) +
+  geom_col()
+```
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 <br>
 
@@ -315,6 +564,7 @@ By income. 2,330 (35%) institutions are missing values for this variable. Those 
 
 1.  I don't know why the institutions did not receive a grant.
 2.  INCOMECD15 used as benchmark for income even though it could be different before or after.
+3.  Institutions may have received a grant in a different year than when their INCOMECD15 year
 
 <br>
 

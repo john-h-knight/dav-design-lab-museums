@@ -48,6 +48,7 @@ Here is a summary.
 ```{r include=FALSE}
 
 library(tidyverse)
+library(maps)
 
 # import grant data (v2)
 data_grants_raw <- read_csv("awarded-grants-2023-04-01 v2.csv")
@@ -169,9 +170,9 @@ data %>%
 
 <br>
 
-Breakdown by state. Map?
+Breakdown by state.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 # number of grants
 data %>%
@@ -181,6 +182,48 @@ data %>%
             mean_award = mean(funds)
             ) %>%
   arrange(-total_funds)
+```
+
+```{r include=FALSE}
+
+# import state abbreviations
+state_abbr <- read_csv("state_abbr.csv")
+
+# change state name to lower case
+state_abbr$state <- tolower(state_abbr$state)
+
+# summarize data to state and total funds
+grants_state <- data %>%
+  group_by(state) %>%
+  summarize(total_funds = sum(funds)) %>%
+  rename(state_abbr = state) %>%
+  left_join(state_abbr,
+            by = c("state_abbr" = "abbreviation")
+            )
+
+# for map data (from R Graphics Cookbook)
+states_map <- map_data("state")
+
+# join
+grants_map <- states_map %>%
+  left_join(grants_state,
+            by = c("region" = "state")
+            )
+```
+
+```{r echo=FALSE}
+
+# plot map
+grants_map %>%
+  ggplot(aes(x = long,
+             y = lat,
+             group = group,
+             fill = total_funds
+             )
+         ) +
+  geom_polygon(color = "black") +
+  coord_map("mercator") +
+  theme_void()
 ```
 
 <br>
@@ -312,7 +355,7 @@ data_not_awarded_count
 # plot of count not awarded
 data_not_awarded_count %>%
   ggplot(aes(x = INCOMECD15,
-             y = not_awarded
+             y = count
              )
          ) +
   geom_col()
@@ -345,7 +388,7 @@ data_awarded_count
 # plot of count awarded
 data_awarded_count %>%
   ggplot(aes(x = INCOMECD15,
-             y = awarded
+             y = count
              )
          ) +
   geom_col()
@@ -383,6 +426,14 @@ data_count %>%
 
 <br>
 
+------------------------------------------------------------------------
+
+<br>
+
+### Burden of matching funds
+
+<br>
+
 Grants by program.
 
 ```{r}
@@ -394,6 +445,103 @@ data %>%
             ) %>%
   arrange(-total_funds) %>%
   mutate(proportion = (total_funds / sum(total_funds))*100)
+```
+
+<br>
+
+-   Top 3 programs by funding represent 93% of total funds over the last 10 years
+
+-   They require matching funds from non-federal sources
+
+<br>
+
+Median award by program by year, as percentage of that income category.
+
+```{r}
+
+# test with Museums for America only to start
+# median grant value through Museums for America
+data %>%
+  filter(program == "Museums for America") %>%
+  summarize(median_grant = median(funds)) 
+```
+
+```{r}
+
+# create plot of income codes
+income_codes <- tibble(
+  code = as.factor(c(0:9)),
+  low = c(0, 1, 10000, 25000, 100000, 500000, 1000000, 5000000, 10000000, 50000000),
+  high = c(0, 9999, 24999, 99999, 499999, 999999, 4999999, 9999999, 49999999, 50000000)
+) %>%
+  mutate(mid = ((high - low)/2) + low,
+         median_grant = 149967,
+         ratio = mid/median_grant,
+         percent = (median_grant/mid) * 100
+         )
+
+income_codes
+```
+
+```{r}
+
+income_codes %>%
+  filter(code == c(0, 1, 2, 3, 4)) %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+
+income_codes %>%
+  filter(code == c(0, 1, 2, 3, 4, 5)) %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+
+income_codes %>%
+  filter(code == c(0, 1, 2, 3, 4, 5, 6)) %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+
+income_codes %>%
+  ggplot(aes(x = code,
+             y = mid
+             )
+         ) +
+  geom_col() +
+  geom_point(aes(x = code,
+                 y = median_grant
+                 )
+             )
+```
+
+```{r}
+
+# ration of income (mid) to median grant
+income_codes %>%
+  ggplot(aes(x = code,
+             y = ratio
+             )
+         ) +
+  geom_col()
 ```
 
 <br>
@@ -430,6 +578,7 @@ data %>%
 
 1.  I don't know why the institutions did not receive a grant.
 2.  INCOMECD15 used as benchmark for income even though it could be different before or after.
+3.  Institutions may have received a grant in a different year than when their INCOMECD15 year
 
 <br>
 
