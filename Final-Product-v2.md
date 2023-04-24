@@ -1,7 +1,7 @@
 ---
-title: 'Final Product'
-author: "John Knight"
-date: "2023-04-23"
+title: '&#32;'
+author: "&#32;"
+date: "&#32;"
 output: 
   html_document: 
     keep_md: yes
@@ -15,82 +15,49 @@ output:
 
 #### And a descriptive subtitle
 
+------------------------------------------------------------------------
+
+This project was completed during a course called "Design Lab: The Industry Challenge" as part of [MICA's Data Analytics and Visualization program](https://online.mica.edu/dav/). The goal of the project is to take students through the design process from start to finish, which not only includes working with data and creating visualizations, but also iterating on the design by incorporating feedback from peers and instructors. Students were required to use data from the Urban Institute, but the topic itself was open-ended.
+
+I chose to explore federal grants made to museums and similar institutions in the US. Partly because the data runs the gamut in terms of numerical, categorical, geospatial, etc., but mostly because I am a museum nerd. I have always enjoyed exploring new museums in new places and used this project as an opportunity to explore them from a different perspective.
+
+Here is a quick summary of what I learned:
+
+-   Placeholder
+
+-   Placeholder
+
+-   Placeholder
+
 <br>
+
+*Note - I'll be using the term "museum" as a catch-all for museums, art galleries, botanical gardens, arboretums, nature centers, zoos, aquariums, and the like.*
 
 ------------------------------------------------------------------------
 
-The Institute of Museum and Library Services (IMLS) is an independent agency of the federal government on a mission to, "advance, support, and empower America's museums libraries, and related organizations through grantmaking, research, and policy development."
+<br>
 
-The IMLS maintains a list of museums in the US in a set of files called the Museum Data Files (MDF). The MDF contain basic institutional identifying information for about 30,000 museums and related organizations in the US. They are split into three files using the following categories. The MDF was last updated in 2018.
+### Museum grants over the last 10 years
 
-The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
+The Urban Institute led me to data from the Institute of Museum and Library Services (IMLS), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes available data regarding the grants they award to museums through various programs.
 
-Here is a summary.
+Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022 though at a slower rate.
 
--   Placeholder
-
--   Placeholder
-
--   Placeholder
+I'll unpack this further in the next section.
 
 <br>
 
-------------------------------------------------------------------------
-
-<br>
-
-### Total grants and programs
 
 
 
-<br>
-
-How many grants did the IMLS award over the last 10 years and what was the total and average value?
-
-
-```r
-data %>%
-  summarize(grants = n(),
-            total_funds = sum(funds),
-            mean_award = mean(funds)
-            )
-```
-
-```
-## # A tibble: 1 × 3
-##   grants total_funds mean_award
-##    <int>       <dbl>      <dbl>
-## 1    628   101674483    161902.
-```
-
-<br>
-
-Funds over time.
-
-
-```r
-# plot of total funds each year
-data %>%
-  group_by(year) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = year,
-             y = funds
-             )
-         ) +
-  geom_line()
-```
 
 ![](Final-Product-v2_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
-<br>
-
 ------------------------------------------------------------------------
 
 <br>
 
-### What institutions received grants?
-
-<br>
+### Where did all that funding go?
 
 How many different institutions won grants?
 
@@ -572,6 +539,10 @@ income_codes %>%
 
 Placeholder.
 
+The IMLS maintains a list of museums in the US in a set of files called the Museum Data Files (MDF). The MDF contain basic institutional identifying information for about 30,000 museums and related organizations in the US. They are split into three files using the following categories. The MDF was last updated in 2018.
+
+The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
+
 <br>
 
 ### Sources
@@ -579,5 +550,9 @@ Placeholder.
 Placeholder.
 
 <br>
+
+### To Do
+
+-   CSS to set width of html output?
 
 
