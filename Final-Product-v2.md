@@ -41,7 +41,7 @@ Here is a quick summary of what I learned:
 
 The Urban Institute led me to data from the Institute of Museum and Library Services (IMLS), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes available data regarding the grants they award to museums through various programs.
 
-Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022 though at a slower rate.
+Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022, though at a slower rate.
 
 I'll unpack this further in the next section.
 
@@ -59,68 +59,35 @@ I'll unpack this further in the next section.
 
 ### Where did all that funding go?
 
-How many different institutions won grants?
+The 628 grants were awarded to 254 different museums. Of those 254, 44% received one grant and the remaining 56% received multiple grants. The American Museum of Natural History in New York tops the list both in terms of number of grants received (12) and the total funding received (\$3,411,368).
 
 
-```r
-data %>%
-  count(institution, sort = TRUE) %>%
-  summarize(institutions = n())
-```
 
-```
-## # A tibble: 1 × 1
-##   institutions
-##          <int>
-## 1          254
-```
+
+
+
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 <br>
 
-Did any institutions win multiple grants?
+At the state level, museums in New York, Illinois, and California received the most funding. There weren't any museums in South Dakota or Oklahoma that were awarded grants from the IMLS.
 
 
-```r
-# plot of number of grants
-data %>%
-  count(institution) %>%
-  ggplot(aes(x = n)) +
-  geom_bar()
-```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+
+
+
+![](Final-Product-v2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 <br>
 
-Breakdown by state.
+There's a clear leader when comparing funding by museum discipline. Nearly \$30 million was awarded to art museums, almost 50% more than the runner up, children's museums. Botanical gardens, zoos/aquariums, and science museums received similar amounts. History museums received the least amount of funds with \$6,201,416.
 
 
 
-
-
-![](Final-Product-v2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
-
-<br>
-
-Total value of grants by discipline.
-
-
-
-
-```r
-# plot of absolute funds
-data %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(DISCIPL, -funds),
-             y = funds,
-             fill = DISCIPL
-             )
-         ) +
-  geom_col()
-```
-
-![](Final-Product-v2_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 <br>
 
@@ -136,7 +103,7 @@ Total value of grants by IRS income category. 92 (15%) awarded institutions are 
 
 
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 <br>
 
@@ -215,7 +182,7 @@ data_not_awarded_count %>%
   geom_col()
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 <br>
 
@@ -266,7 +233,7 @@ data_awarded_count %>%
   geom_col()
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 <br>
 
@@ -289,7 +256,7 @@ data_count %>%
   geom_col(position = "dodge")
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ```r
 data_count %>%
@@ -302,7 +269,7 @@ data_count %>%
   geom_col(position = "dodge")
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-23-2.png)<!-- -->
 
 <br>
 
@@ -417,7 +384,7 @@ income_codes %>%
              )
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ```r
 income_codes %>%
@@ -442,7 +409,7 @@ income_codes %>%
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-27-2.png)<!-- -->
 
 ```r
 income_codes %>%
@@ -467,7 +434,7 @@ income_codes %>%
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-24-3.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-27-3.png)<!-- -->
 
 ```r
 income_codes %>%
@@ -482,7 +449,7 @@ income_codes %>%
              )
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-24-4.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-27-4.png)<!-- -->
 
 
 ```r
@@ -495,7 +462,7 @@ income_codes %>%
   geom_col()
 ```
 
-![](Final-Product-v2_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](Final-Product-v2_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 <br>
 
@@ -554,5 +521,9 @@ Placeholder.
 ### To Do
 
 -   CSS to set width of html output?
+-   Link to GitHub repository
+-   AK and HI in map
+-   Color scale in map
+-   Account for number of museums in state, discipline?
 
 

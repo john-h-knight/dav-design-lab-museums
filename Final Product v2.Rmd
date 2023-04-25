@@ -2,9 +2,7 @@
 title: '&#32;'
 author: "&#32;"
 date: "&#32;"
-output: 
-  html_document: 
-    keep_md: yes
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -45,7 +43,7 @@ Here is a quick summary of what I learned:
 
 The Urban Institute led me to data from the Institute of Museum and Library Services (IMLS), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes available data regarding the grants they award to museums through various programs.
 
-Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022 though at a slower rate.
+Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022, though at a slower rate.
 
 I'll unpack this further in the next section.
 
@@ -134,11 +132,15 @@ data %>%
              )
          ) +
   geom_line() +
-  scale_x_continuous(breaks = c(2013, 2014, 2015, 2016, 2017,
+  scale_x_continuous("Year",
+                     breaks = c(2013, 2014, 2015, 2016, 2017,
                                 2018, 2019, 2020, 2021, 2022),
                      minor_breaks = NULL
                      ) +
-  ylim(0, 15000000) +
+  scale_y_continuous("Grant Funds",
+                     labels = scales::label_dollar(),
+                     limits = c(0, 15000000)
+                     ) +
   theme_classic()
 ```
 
@@ -148,31 +150,61 @@ data %>%
 
 ### Where did all that funding go?
 
-How many different institutions won grants?
+The 628 grants were awarded to 254 different museums. Of those 254, 44% received one grant and the remaining 56% received multiple grants. The American Museum of Natural History in New York tops the list both in terms of number of grants received (12) and the total funding received (\$3,411,368).
 
-```{r}
+```{r include=FALSE}
 
 data %>%
   count(institution, sort = TRUE) %>%
   summarize(institutions = n())
 ```
 
-<br>
+```{r include=FALSE}
 
-Did any institutions win multiple grants?
+data %>%
+  count(institution) %>%
+  group_by(n) %>%
+  summarize(count = n()) %>%
+  arrange(n)
+```
 
-```{r}
+```{r include=FALSE}
+
+data %>%
+  group_by(institution) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+#  arrange(-count)
+  arrange(-funds)
+```
+
+```{r echo=FALSE}
 
 # plot of number of grants
 data %>%
   count(institution) %>%
-  ggplot(aes(x = n)) +
-  geom_bar()
+  group_by(n) %>%
+  summarize(count = n()) %>%
+  arrange(n) %>%
+  ggplot(aes(x = n,
+             y = count
+             )
+         ) +
+  geom_col() +
+  scale_x_continuous("Number of Grants Received",
+                     breaks = c(0:12),
+                     minor_breaks = NULL
+                     ) +
+  scale_y_continuous("Number of Museums",
+                     limits = c(0, 120)
+                     ) +
+  theme_classic()
 ```
 
 <br>
 
-Breakdown by state.
+At the state level, museums in New York, Illinois, and California received the most funding. There weren't any museums in South Dakota or Oklahoma that were awarded grants from the IMLS.
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -186,7 +218,16 @@ data %>%
   arrange(-total_funds)
 ```
 
-```{r include=FALSE}
+```{r eval=FALSE, include=FALSE}
+
+# number of museums in each state
+data_museums_raw %>%
+  group_by(ADSTATE) %>%
+  summarize(count = n()) %>%
+  arrange(-count)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 # import state abbreviations
 state_abbr <- read_csv("state_abbr.csv")
@@ -225,12 +266,38 @@ grants_map %>%
          ) +
   geom_polygon(color = "black") +
   coord_map("mercator") +
+  scale_fill_viridis_c() +
+  labs(fill = "Grant Funding") +
+  theme_void()
+```
+
+```{r eval=FALSE, include=FALSE}
+
+grants_map %>%
+  ggplot(aes(map_id = region,
+             fill = total_funds
+             )
+         ) +
+  geom_map(map = states_map,
+           color = "black"
+           ) +
+  expand_limits(x = states_map$long,
+                y = states_map$lat
+                ) +
+  coord_map("mercator") +
+  # scale_fill_gradient2(low = "#559999",
+  #                      mid = "grey90",
+  #                      high = "#BB650B",
+  #                      midpoint = 915738
+  #                      ) +
+  scale_fill_viridis_c() +
+  labs(fill = "Grant Funding") +
   theme_void()
 ```
 
 <br>
 
-Total value of grants by discipline.
+There's a clear leader when comparing funding by museum discipline. Nearly \$30 million was awarded to art museums, almost 50% more than the runner up, children's museums. Botanical gardens, zoos/aquariums, and science museums received similar amounts. History museums received the least amount of funds with \$6,201,416.
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -241,7 +308,7 @@ data %>%
   arrange(-funds)
 ```
 
-```{r}
+```{r echo=FALSE}
 
 # plot of absolute funds
 data %>%
@@ -252,7 +319,8 @@ data %>%
              fill = DISCIPL
              )
          ) +
-  geom_col()
+  geom_col() +
+  theme_classic()
 ```
 
 <br>
@@ -603,6 +671,10 @@ Placeholder.
 ### To Do
 
 -   CSS to set width of html output?
+-   Link to GitHub repository
+-   AK and HI in map
+-   Color scale in map
+-   Account for number of museums in state, discipline?
 
 ```{r eval=FALSE, include=FALSE}
 
