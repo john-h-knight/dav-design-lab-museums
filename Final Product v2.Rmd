@@ -266,7 +266,7 @@ grants_map %>%
          ) +
   geom_polygon(color = "black") +
   coord_map("mercator") +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(labels = scales::label_dollar()) +
   labs(fill = "Grant Funding") +
   theme_void()
 ```
@@ -310,20 +310,72 @@ data %>%
 
 ```{r echo=FALSE}
 
-# plot of absolute funds
-data %>%
+# summarize to funds by discipline, save as new object
+data_disciplines <- data %>%
   group_by(DISCIPL) %>%
-  summarize(funds = sum(funds)) %>%
+  summarize(funds = sum(funds))
+
+# rename discipline factor levels
+# levels(data_disciplines$DISCIPL) <- list(ART = "Art",
+#                                          BOT = "Botanical Garden",
+#                                          CMU = "Children's",
+#                                          HST = "History",
+#                                          NAT = "Natural History",
+#                                          SCI = "Science",
+#                                          ZAW = "Zoo/Aquarium"
+#                                          )
+
+# rename discipline factor levels
+levels(data_disciplines$DISCIPL) <- c("Art",
+                                      "Botanical Garden",
+                                      "Children's",
+                                      "History",
+                                      "Natural History",
+                                      "Science",
+                                      "Zoo/Aquarium"
+                                      )
+```
+
+```{r echo=FALSE}
+
+# plot of absolute funds by discipline
+data_disciplines %>%
+  ggplot(aes(x = reorder(DISCIPL, -funds),
+             y = funds,
+             # fill = DISCIPL
+             )
+         ) +
+  geom_col() +
+  scale_x_discrete("Museum Discipline") + # change x-axis label
+  scale_y_continuous("Grant Funds", # change y-axis label
+                   labels = scales::label_dollar() # reformat y-axis to $ with commas
+                   ) +
+  guides(fill = "none") + # remove legend
+  theme_classic()
+  # theme(axis.text.x = element_text(angle = 45)) # rotate x-axis labels
+```
+
+```{r eval=FALSE, include=FALSE}
+
+data_disciplines %>%
   ggplot(aes(x = reorder(DISCIPL, -funds),
              y = funds,
              fill = DISCIPL
              )
          ) +
   geom_col() +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                   labels = scales::label_dollar() # reformat y-axis to $ with commas
+                   ) +
+  labs(x = "Museum Discipline") + # change x-axis label
+  geom_text(aes(label = DISCIPL,
+                vjust = -0.8,
+                hjust = 0.3
+                ),
+            angle = 45
+            ) +
   theme_classic()
 ```
-
-<br>
 
 ------------------------------------------------------------------------
 
@@ -331,11 +383,9 @@ data %>%
 
 ### What about in terms of income?
 
-<br>
-
 Total value of grants by IRS income category. 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 
 # absolute funds
 data %>%
@@ -362,7 +412,12 @@ data %>%
              y = funds
              )
          ) +
-  geom_col()
+  geom_col() +
+  scale_x_discrete("Income Category") +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                   labels = scales::label_dollar() # reformat y-axis to $ with commas
+                   ) +
+  theme_classic()
 ```
 
 <br>
@@ -675,6 +730,7 @@ Placeholder.
 -   AK and HI in map
 -   Color scale in map
 -   Account for number of museums in state, discipline?
+-   colors for funds by discipline
 
 ```{r eval=FALSE, include=FALSE}
 
