@@ -327,7 +327,7 @@ data_disciplines <- data %>%
 
 # rename discipline factor levels
 levels(data_disciplines$DISCIPL) <- c("Art",
-                                      "Botanical Garden",
+                                      "Botanical",
                                       "Children's",
                                       "History",
                                       "Natural History",
@@ -381,11 +381,13 @@ data_disciplines %>%
 
 <br>
 
-### What about in terms of income?
+### More funding went to museums with higher income
 
-Total value of grants by IRS income category. 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
+I was curious to see how the grants are distributed relative to income reported by the museums. Surprisingly, more funding went to museums with higher income levels. This contradicted my assumption that grants would go to institutions that needed funding, and that museums with higher income need less funding because they have the resources to support their initiatives.
 
-```{r}
+*Note - income data wasn't available for 15% of the museums and they aren't included in the charts below.*
+
+```{r include=FALSE}
 
 # absolute funds
 data %>%
@@ -409,7 +411,8 @@ data %>%
           funds = 0
           ) %>%
   ggplot(aes(x = INCOMECD15,
-             y = funds
+             y = funds,
+             fill = INCOMECD15
              )
          ) +
   geom_col() +
@@ -417,10 +420,20 @@ data %>%
   scale_y_continuous("Grant Funds", # change y-axis label
                    labels = scales::label_dollar() # reformat y-axis to $ with commas
                    ) +
+  scale_fill_discrete(labels = c("$0", 
+                               "$1 - $9,999", 
+                               "$10,000 - $24,999", 
+                               "$25,000 - $99,999",
+                               "$100,000 - $499,999", 
+                               "$500,000 - $999,999",
+                               "$1,000,000 - $4,999,999", 
+                               "$5,000,000 - $9,999,999",
+                               "$10,000,000 - $49,999,999", 
+                               "$50,000,000 to greater"
+                               )
+                    ) +
   theme_classic()
 ```
-
-<br>
 
 ------------------------------------------------------------------------
 
@@ -428,9 +441,9 @@ data %>%
 
 ### Why did more grants go to institutions with higher incomes?
 
-<br>
+Placeholder.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 data_not_awarded <- data_museums %>%
   full_join(data_grants, 
@@ -452,7 +465,7 @@ data_not_awarded <- data_museums %>%
 
 How many institutions did not win an award over the last 10 years?
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 data_not_awarded %>%
   summarize(count = n())
@@ -462,7 +475,7 @@ data_not_awarded %>%
 
 By income. 2,330 (35%) institutions are missing values for this variable. Those institutions are not included in the graph below.
 
-```{r echo=FALSE}
+```{r eval=FALSE, include=FALSE}
 
 # count not awarded
 data_not_awarded_count <- data_not_awarded %>%
@@ -475,7 +488,7 @@ data_not_awarded_count <- data_not_awarded %>%
 data_not_awarded_count
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 # plot of count not awarded
 data_not_awarded_count %>%
@@ -488,7 +501,7 @@ data_not_awarded_count %>%
 
 <br>
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 # count awarded
 data_awarded_count <- data %>%
@@ -508,7 +521,7 @@ data_awarded_count <- data %>%
 data_awarded_count
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 # plot of count awarded
 data_awarded_count %>%
@@ -523,13 +536,13 @@ data_awarded_count %>%
 
 Combine awarded and not awarded in one chart.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 data_count <- data_awarded_count %>%
   bind_rows(data_not_awarded_count)
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 data_count %>%
   ggplot(aes(x = INCOMECD15,
@@ -549,15 +562,11 @@ data_count %>%
   geom_col(position = "dodge")
 ```
 
-<br>
-
 ------------------------------------------------------------------------
 
 <br>
 
 ### Burden of matching funds
-
-<br>
 
 Grants by program.
 
@@ -669,8 +678,6 @@ income_codes %>%
   geom_col()
 ```
 
-<br>
-
 ------------------------------------------------------------------------
 
 <br>
@@ -679,7 +686,47 @@ income_codes %>%
 
 -   Use zip codes to compare to low-income areas (census bureau?)
 
-<br>
+```{r}
+
+data %>%
+  filter(program == "Museums for America") %>%
+  group_by(INCOMECD15) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(1),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col() +
+  theme_classic()
+
+
+
+
+data %>%
+  filter(program == "Inspire! Grants for Small Museums") %>%
+  group_by(INCOMECD15) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(1, 2, 7, 8, 9)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col() +
+  theme_classic()
+```
 
 ------------------------------------------------------------------------
 
@@ -692,8 +739,6 @@ income_codes %>%
 -   IMLS should direct more funding to areas that need it
 
 -   People can donate to the least likely museums
-
-<br>
 
 ------------------------------------------------------------------------
 
@@ -731,6 +776,9 @@ Placeholder.
 -   Color scale in map
 -   Account for number of museums in state, discipline?
 -   colors for funds by discipline
+-   rename income category
+-   link to footnotes
+-   bold key text
 
 ```{r eval=FALSE, include=FALSE}
 
