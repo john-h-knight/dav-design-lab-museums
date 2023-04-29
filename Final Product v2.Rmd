@@ -513,17 +513,17 @@ data_count %>%
 
 ### Most grant programs require matching funds
 
-Let's look at how these grants are actually awarded. The IMLS has multiple grant programs with various eligibility criteria, funding amounts, and cost share requirements. In this data, the top four programs by funding awarded **represent 95% of the total funding** over the last 10 years. Of those, the top three require that the museum, "provide funds from non-federal sources in an amount that is equal to or greater than" the amount requested in the grant application. For example, if a museum applies for a \$100,000 grant through the *Museums for America* program they must match that amount through other (non-federal) means. The *Inspire! Grants for Small Museums* program does not require matching funds.
+Let's look at how these grants are actually awarded. The IMLS has multiple grant programs with various eligibility criteria, funding amounts, and cost share requirements. In this data, the top four programs by funding awarded **represent 95% of the total funding** over the last 10 years. Of those, the top three require that the museum, "provide funds from non-federal sources in an amount that is equal to or greater than" the amount requested in the grant application. For example, if a museum applies for a \$100,000 grant through the *Museums for America* program they must match that amount through other (non-federal) means.
 
 <br>
 
 ```{r echo=FALSE}
 
 program_table <- tibble("Rank" = c(1:4),
-                           "Program" = c("Museums for America",
-                                         "National Leadership Grants - Museums",
-                                         "Museums Empowered",
-                                         "Inspire! Grants for Small Museums"),
+                        "Program" = c("Museums for America",
+                                      "National Leadership Grants - Museums",
+                                      "Museums Empowered",
+                                      "Inspire! Grants for Small Museums"),
                         "Total Funds" = c("$70,578,719",
                                           "$16,292,260",
                                           "$7,966,050",
@@ -549,7 +549,7 @@ program_table %>%
 
 <br>
 
-Isolating each program confirms that the top three programs skew towards higher income levels. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels. This could be explained
+Isolating each program confirms that the top three programs skew towards higher income levels. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels. FOOTNOTE
 
 ```{r echo=FALSE}
 
@@ -756,6 +756,7 @@ income_codes %>%
 1.  I don't know why the institutions did not receive a grant.
 2.  INCOMECD15 used as benchmark for income even though it could be different before or after.
 3.  Institutions may have received a grant in a different year than when their INCOMECD15 year
+4.  The [application information](https://imls.gov/grants/available/inspire-grants-small-museums) for this program explains that it is designed to support small museums, but it's not clear how "small" is defined. If there is a correlation between size and income level, then museums with high income levels may not be eligible for this program. That could be one explanation for the distribution above. Unfortunately, the IMLS data doesn't contain information regarding size.
 
 <br>
 
@@ -882,4 +883,12 @@ p4 <- data %>%
   theme_classic()
 
 (p1 | p2) / (p3 | p4)
+```
+
+```{r}
+
+data %>%
+  group_by(program) %>%
+  summarize(total_funds = sum(funds)) %>%
+  arrange(-total_funds)
 ```
