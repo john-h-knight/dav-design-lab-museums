@@ -769,19 +769,6 @@ income_codes %>%
   )
 ```
 
-```{r}
-
-income_codes %>%
-  ggplot(aes(x = code,
-             y = ratio
-             )
-         ) +
-  geom_col() +
-  scale_x_discrete("Income Level") +
-  scale_y_continuous("Ratio of Income to Matching Funds") +  
-  theme_classic()
-```
-
 ------------------------------------------------------------------------
 
 <br>
@@ -819,7 +806,13 @@ The IMLS also makes available data regarding the grants they award to these inst
 
 ### Sources
 
-Placeholder.
+1.  Urban Institute. 2020. Catalog of National Small-Area Data. Accessible from <https://datacatalog.urban.org/dataset/catalog-national-small-area-data>. Data developed at the Urban Institute, and made available under the ODC-BY 1.0 Attribution License.
+
+2.  Frehill, L. M. and Pelczar, M. (2018). *Data File Documentation: Museum Data Files, FY 2018 Release*. Institute of Museum and Library Services: Washington, DC. Accessible from <https://imls.gov/research-evaluation/data-collection/museum-data-files>.
+
+3.  IMLS. Awarded Grants data. Accessible from [https://imls.gov/grants/awarded-grants?field_recipient_type[Office+of+Museum+Services]=Office+of+Museum+Services](https://imls.gov/grants/awarded-grants?field_recipient_type[Office+of+Museum+Services]=Office+of+Museum+Services).
+
+4.  American Alliance of Museums. Museum Facts & Data. <https://www.aam-us.org/programs/about-museums/museum-facts-data/>.
 
 <br>
 
@@ -836,106 +829,3 @@ Placeholder.
 -   bold key text
 -   center charts
 -   smart brevity?
-
-```{r eval=FALSE, include=FALSE}
-
-# SANDBOX
-
-# institutions with more revenue/income can pay for staff who apply for grants
-
-# impact of private/other funding on applying for grants, winning
-
-```
-
-```{r eval=FALSE, include=FALSE}
-
-p1 <- data %>%
-  filter(program == "Museums for America") %>%
-  group_by(INCOMECD15) %>%
-  filter(!is.na(INCOMECD15)) %>%
-  summarize(count = n(),
-            funds = sum(funds)
-            ) %>%
-  add_row(INCOMECD15 = as.factor(1),
-          count = 0,
-          funds = 0
-          ) %>%
-  arrange(INCOMECD15) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col() +
-  ylim(0, 150) +
-  theme_classic()
-
-p2 <- data %>%
-  filter(program == "National Leadership Grants - Museums") %>%
-  group_by(INCOMECD15) %>%
-  filter(!is.na(INCOMECD15)) %>%
-  summarize(count = n(),
-            funds = sum(funds)
-            ) %>%
-  add_row(INCOMECD15 = as.factor(c(0, 1, 2, 3, 3)),
-          count = 0,
-          funds = 0
-          ) %>%
-  arrange(INCOMECD15) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col() +
-  ylim(0, 150) +
-  theme_classic()
-
-p3 <- data %>%
-  filter(program == "Museums Empowered: Professional Development Opportunities for Museum Staff") %>%
-  group_by(INCOMECD15) %>%
-  filter(!is.na(INCOMECD15)) %>%
-  summarize(count = n(),
-            funds = sum(funds)
-            ) %>%
-  add_row(INCOMECD15 = as.factor(c(1, 2, 3, 3)),
-          count = 0,
-          funds = 0
-          ) %>%
-  arrange(INCOMECD15) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col() +
-  ylim(0, 150) +
-  theme_classic()
-
-p4 <- data %>%
-  filter(program == "Inspire! Grants for Small Museums") %>%
-  group_by(INCOMECD15) %>%
-  filter(!is.na(INCOMECD15)) %>%
-  summarize(count = n(),
-            funds = sum(funds)
-            ) %>%
-  add_row(INCOMECD15 = as.factor(c(1, 2, 7, 8, 9)),
-          count = 0,
-          funds = 0
-          ) %>%
-  arrange(INCOMECD15) %>%
-  ggplot(aes(x = INCOMECD15,
-             y = count
-             )
-         ) +
-  geom_col() +
-  ylim(0, 150) +
-  theme_classic()
-
-(p1 | p2) / (p3 | p4)
-```
-
-```{r}
-
-data %>%
-  group_by(program) %>%
-  summarize(total_funds = sum(funds)) %>%
-  arrange(-total_funds)
-```
