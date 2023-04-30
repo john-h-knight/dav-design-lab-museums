@@ -56,6 +56,10 @@ library(tidyverse)
 library(maps)
 library(patchwork)
 library(kableExtra)
+library(ggtext)
+```
+
+```{r include=FALSE}
 
 # import grant data (v2)
 data_grants_raw <- read_csv("awarded-grants-2023-04-01 v2.csv")
@@ -682,9 +686,11 @@ p4 <- data %>%
 
 ### The burden of matching funds
 
-Placeholder.
+The top three grant programs may skew towards higher income levels because museums with lower income may not be able to afford the cost share requirements. Furthermore, the *Inspire! Grants for Small Museums* may skew towards museums with lower income because they don't have to provide matching funds.
 
-```{r}
+I'll use the median grant amount from the *Museums for America* program, rounded to \$150,000, as a benchmark for comparison among the income levels. Museums with income levels 0 to 3 make less than the \$150,000 needed for matching funds. Beyond that, museums have incomes greater than the \$150,000 threshold, some significantly more. For instance, museums at the highest income level have at least 333x that amount.
+
+```{r eval=FALSE, include=FALSE}
 
 # test with Museums for America only to start
 # median grant value through Museums for America
@@ -693,7 +699,7 @@ data %>%
   summarize(median_grant = median(funds)) 
 ```
 
-```{r}
+```{r include=FALSE}
 
 # create plot of income codes
 income_codes <- tibble(
@@ -701,38 +707,79 @@ income_codes <- tibble(
   low = c(0, 1, 10000, 25000, 100000, 500000, 1000000, 5000000, 10000000, 50000000),
   high = c(0, 9999, 24999, 99999, 499999, 999999, 4999999, 9999999, 49999999, 50000000)
 ) %>%
-  mutate(mid = ((high - low)/2) + low,
-         median_grant = 149967,
-         ratio = mid/median_grant,
-         percent = (median_grant/mid) * 100
+  mutate(mid = round(((high - low)/2) + low, 0),
+         diff = mid - 150000,
+         ratio = round((mid / 150000), 0)
          )
 
 income_codes
 ```
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
+# create data for median grant label
+median_label <- tibble(
+  label = c("<span style='font-size:10pt'> **median grant** 
+            <br>
+            $150,000 
+            </span>"),
+  set = c(1),
+  x = c(2.5),
+  y = c(5000000)
+)
+
+# plot
 income_codes %>%
   ggplot(aes(x = code,
              y = mid
              )
          ) +
   geom_col() +
-  geom_point(aes(x = code,
-                 y = median_grant
-                 )
-             )
+  geom_hline(yintercept = 150000,
+             color = "red",
+             linetype = "solid",
+             size = 1
+             ) +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Representative Income",
+                     labels = scales::label_dollar(),
+                     trans = "log10",
+                     breaks = c(10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)
+                     ) +
+  theme_classic() +
+  geom_richtext(data = median_label,
+                inherit.aes = FALSE,
+                aes(x = x,
+                    y = y,
+                    label = label
+                    ),
+                fill = "gray",
+                label.color = "black",
+                # label.padding = grid::unit(rep(0, 4), "pt")
+                ) +
+  geom_segment(aes(x = 2.5,
+                   y = 2000000,
+                   xend = 2.5,
+                   yend = 160000,
+                   ),
+               arrow = arrow(length = unit(5, "pt"),
+                             ends = "last",
+                             type = "closed"
+               )
+  )
 ```
 
 ```{r}
 
-# ration of income (mid) to median grant
 income_codes %>%
   ggplot(aes(x = code,
              y = ratio
              )
          ) +
-  geom_col()
+  geom_col() +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Ratio of Income to Matching Funds") +  
+  theme_classic()
 ```
 
 ------------------------------------------------------------------------
