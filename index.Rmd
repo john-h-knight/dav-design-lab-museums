@@ -1,10 +1,8 @@
 ---
-title: 'MVP'
-author: "John Knight"
-date: "`r Sys.Date()`"
-output: 
-  html_document: 
-    keep_md: yes
+title: '&#32;'
+author: "&#32;"
+date: "&#32;"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -15,56 +13,70 @@ options("scipen" = 999)
 
 <br>
 
-## Intro
+# A Clever Title About Museum Grants
 
-#### Background
+#### And a descriptive subtitle
 
-The Institute of Museum and Library Services (IMLS) is an independent agency of the federal government on a mission to, "advance, support, and empower America's museums libraries, and related organizations through grantmaking, research, and policy development."
+------------------------------------------------------------------------
 
-The IMLS maintains a list of museums in the US in a set of files called the Museum Data Files (MDF). The MDF contain basic institutional identifying information for about 30,000 museums and related organizations in the US. They are split into three files using the following categories. The MDF was last updated in 2018.
+This project was completed during a course called "Design Lab: The Industry Challenge" as part of [MICA's Data Analytics and Visualization program](https://online.mica.edu/dav/). The goal of the project is to take students through the design process from start to finish, which not only includes working with data and creating visualizations, but also iterating on the design by incorporating feedback from peers and instructors. Students were required to use data from the Urban Institute, but the topic itself was open-ended.
 
-The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
+I chose to explore federal grants made to museums and similar institutions in the US. Partly because the data runs the gamut in terms of numerical, categorical, geospatial, etc., but mostly because I am a museum nerd. I have always enjoyed exploring new museums in new places and used this project as an opportunity to explore them from a different perspective.
 
-#### Project Goal
+Here is a quick summary of what I learned:
 
-Use data from the IMLS to explore how grants are distributed across disciplines, areas, and time.
+-   Placeholder
+
+-   Placeholder
+
+-   Placeholder
 
 <br>
 
-## Analysis
+*Note - I'll be using the term "museum" as a catch-all for museums, art galleries, botanical gardens, arboretums, nature centers, zoos, aquariums, and the like.*
 
-For this project I'm going to use the following packages.
+------------------------------------------------------------------------
 
-```{r message=FALSE}
+<br>
 
+### Museum grants over the last 10 years
+
+The Urban Institute led me to data from the Institute of Museum and Library Services (IMLS), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes available data regarding the grants they award to museums through various programs.
+
+Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022, though at a slower rate.
+
+I'll unpack this further in the next section.
+
+<br>
+
+```{r include=FALSE}
+
+# load packages
 library(tidyverse)
-library(leaflet)
+library(maps)
+library(patchwork)
+library(kableExtra)
+library(ggtext)
 ```
 
-<br>
+```{r include=FALSE}
 
-The next step is to import the data into RStudio. The first file is File 1 from the MDF that I downloaded from the IMLS website. I'm only going to use File 1 because all of the institutions are categorized as one of seven disciplines:
+# import grant data (v2)
+data_grants_raw <- read_csv("data/awarded-grants-2023-04-01 v2.csv")
 
-1.  Art Museums
-
-2.  Arboretums, Botanical Gardens, & Nature Centers
-
-3.  Children's Museums
-
-4.  History Museums
-
-5.  Natural History & Natural Science Museums
-
-6.  Science & Technology Museums & Planetariums
-
-7.  Zoos, Aquariums, & Wildlife Conservation
-
-File 2 contains "uncategorized or general museums" and File 3 is "historical societies, historic preservation". The discipline variable will be another way to analyze the grant data.
-
-```{r message=FALSE, warning=FALSE}
+# select columns to work with
+data_grants <- data_grants_raw %>%
+  select(institution,
+         city,
+         state,
+         year,
+         funds,
+         program,
+         `log number`
+         )
 
 # import MDF File 1 (v2), format select columns
-data_museums_raw <- read_csv("MuseumFile2018_File1_Nulls v2.csv", 
+data_museums_raw <- read_csv("data/MuseumFile2018_File1_Nulls v2.csv", 
                              col_types = cols(DISCIPL = col_factor(levels = c("ART", "BOT", 
                                                                               "CMU", "HST", 
                                                                               "NAT", "SCI", 
@@ -88,325 +100,215 @@ data_museums_raw <- read_csv("MuseumFile2018_File1_Nulls v2.csv",
 # select columns to work with
 data_museums <- data_museums_raw %>%
   select(COMMONNAME,
-         LEGALNAME,
-         ADCITY,
-         ADSTATE,
-         LONGITUDE,
-         LATITUDE,
          DISCIPL,
-         AAMREG,
-         BEAREG,
-         LOCALE4,
-         TAXPER15,
-         INCOMECD15,
-         INCOME15,
-         REVENUE15,
-         MID
+         INCOMECD15
          )
-```
-
-<br>
-
-The second file contains data on all grants awarded to museums by the IMLS.
-
-```{r message=FALSE, warning=FALSE}
-
-# import grant data (v2)
-data_grants_raw <- read_csv("awarded-grants-2023-04-01 v2.csv")
-
-# select columns to work with
-data_grants <- data_grants_raw %>%
-  select(institution,
-         city,
-         state,
-         year,
-         funds,
-         `log number`
-         )
-```
-
-<br>
-
-In order to breakdown the grant data by multiple criteria I need to join the two files together into one dataset.
-
-```{r}
 
 # join requires the same case for character strings
-data_museums$COMMONNAME <- tolower(data_museums$COMMONNAME)
 data_grants$institution <- tolower(data_grants$institution)
+data_museums$COMMONNAME <- tolower(data_museums$COMMONNAME)
 
-# join by name
-data_joined <- data_museums %>%
-  full_join(data_grants, 
-            by = c("COMMONNAME" = "institution"), 
-            keep = TRUE,
+# join by name, inner join retains only matching rows, and filter for last 10 years
+data <- data_grants %>%
+  inner_join(data_museums,
+            by = c("institution" = "COMMONNAME"),
             relationship = "many-to-many"
-            )
-```
-
-<br>
-
-What matched?
-
-```{r}
-
-data_joined %>%
-  filter(!is.na(COMMONNAME),
-         !is.na(funds)
-         ) %>%
-  group_by(institution) %>%
-  summarize(grants = n(),
-            funds = sum(funds)
             ) %>%
-  summarise(total_grants = sum(grants),
-            total_funds = sum(funds)
-            )
+  filter(year >= 2013)
 ```
 
-<br>
+```{r include=FALSE}
 
--   Number of grants = 2,354
-
--   Value of grants = \$266M
-
-<br>
-
-What didn't match?
-
-```{r}
-
-data_joined %>%
-  filter(is.na(COMMONNAME)) %>%
-  group_by(institution) %>%
+# count, total funds, and mean award over last 10 years
+data %>%
   summarize(grants = n(),
-            funds = sum(funds)
-            ) %>%
-  summarise(total_grants = sum(grants),
-            total_funds = sum(funds)
+            total_funds = sum(funds),
+            mean_award = mean(funds)
             )
 ```
 
-<br>
+```{r echo=FALSE}
 
--   Number of grants = 8,213
-
--   Value of grants = \$701M
-
-<br>
-
-A grant may not match with an institution for several reasons:
-
-1.  The awarded institution is not in File 1 because it's in File 2 or File 3
-
-2.  Character strings are different (extra "the", & or and, spelling, etc)
-
-3.  The awarded institution is not in the MDF because it was established after 2015
-
-<br>
-
-I suspect that #1 is the largest contributing factor. File 1 contains 7,429 entries while File 2 and 3 contain 22,742 together.
-
-<br>
-
-### Part 1
-
-Overview of institutions.
-
-```{r message=FALSE, warning=FALSE}
-
-# create a palette that maps museum discipline to colors
-pal1 <- colorFactor(c("red", "orange", "yellow", "green3", "deepskyblue2", "blue4", "purple4"),
-                   domain = c("ART", "BOT", "CMU", "HST", "NAT", "SCI", "ZAW")
-                   )
-
-# create map with common name as label and colored by discipline
-leaflet(data_museums) %>%
-  addProviderTiles(providers$Stamen.TonerLite, group = "Lite") %>%
-  #addProviderTiles(providers$Stamen.Terrain, group = "Terrain") %>%
-  #addProviderTiles(providers$Esri.WorldImagery, group = "World Imagery") %>%
-  #addLayersControl(baseGroups = c("Lite", "Terrain")) %>%
-  addCircleMarkers(label = ~COMMONNAME,
-                   fillColor = ~pal1(DISCIPL),
-                   fillOpacity = 0.6,
-                   stroke = TRUE,
-                   color = "black",
-                   weight = 1,
-                   radius = 2) #%>%
-  #setView(lat = 59.903689, lng = 10.746552, zoom = 3.5)
-```
-
-<br>
-
-```{r, echo=FALSE}
-
-# count by discipline
-data_museums %>%
-  ggplot(aes(x = DISCIPL,
-             fill = DISCIPL
-             )
-         ) +
-  geom_bar() +
-  scale_fill_hue(direction = 1) +
-  labs(title = "Count by Discipline") +
-  theme_minimal() +
-  theme(legend.position = "none")
-```
-
-<br>
-
-```{r, echo=FALSE, fig.height=8}
-
-# count by state
-data_museums %>%
-  ggplot(aes(x = ADSTATE)
-         ) +
-  geom_bar() +
-  labs(title = "Count by State") +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  coord_flip()
-```
-
-<br>
-
-```{r, echo=FALSE}
-
-# count by locale
-data_museums %>%
-  filter(!is.na(LOCALE4)) %>%
-  ggplot(aes(x = LOCALE4)
-         ) +
-  geom_bar() +
-  labs(title = "Count by Locale") +
-  theme_minimal() +
-  theme(legend.position = "none")
-```
-
-<br>
-
-```{r, echo=FALSE}
-
-# count by income code
-data_museums %>%
-  filter(!is.na(INCOMECD15)) %>%
-  ggplot(aes(x = INCOMECD15)
-         ) +
-  geom_bar() +
-  labs(title = "Count by Income Code") +
-  theme_minimal() +
-  theme(legend.position = "none")
-```
-
-<br>
-
-### Part 2
-
-Institutions that received grants.
-
-```{r}
-
-data <- data_joined %>%
-  filter(!is.na(COMMONNAME)) %>%    # remove awarded institutions not in the museum list
-  replace_na(list(year = 9999,      # replace NAs with values for analysis
-                  funds = 0
-                  )
-             ) %>%
-  filter(year >= 2013)              # filter for last 10 years (2013-2022)
-
-# filter for institutions that received grants
-data_awarded <- data %>%
-  filter(funds != 0)
-```
-
-<br>
-
-How many grants did the IMLS award over the last 10 years?
-
-```{r}
-
-# count
-data_awarded %>%
-  summarize(total_count = n())
-
-# plot of count each year
-data_awarded %>%
-  group_by(year) %>%
-  count() %>%
-  ggplot(aes(x = year,
-             y = n
-             )
-         ) +
-  geom_line()
-```
-
-<br>
-
-What's the total value of those grants?
-
-```{r}
-
-# total
-data_awarded %>%
-  summarize(total = sum(funds))
-
-# plot of total by year
-data_awarded %>%
+# plot of total funds each year
+data %>%
   group_by(year) %>%
   summarize(funds = sum(funds)) %>%
   ggplot(aes(x = year,
              y = funds
              )
          ) +
-  geom_line()
+  geom_line() +
+  scale_x_continuous("Year",
+                     breaks = c(2013, 2014, 2015, 2016, 2017,
+                                2018, 2019, 2020, 2021, 2022),
+                     minor_breaks = NULL
+                     ) +
+  scale_y_continuous("Grant Funds",
+                     labels = scales::label_dollar(),
+                     limits = c(0, 15000000)
+                     ) +
+  theme_classic()
 ```
+
+------------------------------------------------------------------------
 
 <br>
 
-What was the average grant amount?
+### Where did all that funding go?
 
-```{r}
+The 628 grants were awarded to 254 different museums. Of those 254, 44% received one grant and the remaining 56% received multiple grants. The American Museum of Natural History in New York tops the list both in terms of number of grants received (12) and the total funding received (\$3,411,368).
 
-data_awarded %>%
-  summarize(average = mean(funds))
-```
+```{r include=FALSE}
 
-<br>
-
-How many different institutions won grants?
-
-```{r}
-
-data_awarded %>%
+data %>%
   count(institution, sort = TRUE) %>%
   summarize(institutions = n())
 ```
 
-<br>
+```{r include=FALSE}
 
-Did any institutions win multiple grants?
+data %>%
+  count(institution) %>%
+  group_by(n) %>%
+  summarize(count = n()) %>%
+  arrange(n)
+```
 
-```{r}
+```{r include=FALSE}
 
-# filter for institutions that received more than 1 grant
-data_awarded %>%
-  count(institution, sort = TRUE) %>%
-  filter(n > 1)
+data %>%
+  group_by(institution) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+#  arrange(-count)
+  arrange(-funds)
+```
+
+```{r echo=FALSE}
 
 # plot of number of grants
-data_awarded %>%
+data %>%
   count(institution) %>%
-  ggplot(aes(x = n)) +
-  geom_bar()
+  group_by(n) %>%
+  summarize(count = n()) %>%
+  arrange(n) %>%
+  ggplot(aes(x = n,
+             y = count
+             )
+         ) +
+  geom_col() +
+  scale_x_continuous("Number of Grants Received",
+                     breaks = c(0:12),
+                     minor_breaks = NULL
+                     ) +
+  scale_y_continuous("Number of Museums",
+                     limits = c(0, 120)
+                     ) +
+  theme_classic()
 ```
 
 <br>
 
-By discipline (total value of grants).
+At the state level, museums in New York, Illinois, and California received the most funding. There weren't any museums in South Dakota or Oklahoma that were awarded grants from the IMLS.
+
+```{r eval=FALSE, include=FALSE}
+
+# number of grants
+data %>%
+  group_by(state) %>%
+  summarize(grants = n(),
+            total_funds = sum(funds),
+            mean_award = mean(funds)
+            ) %>%
+  arrange(-total_funds)
+```
+
+```{r eval=FALSE, include=FALSE}
+
+# number of museums in each state
+data_museums_raw %>%
+  group_by(ADSTATE) %>%
+  summarize(count = n()) %>%
+  arrange(-count)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+# import state abbreviations
+state_abbr <- read_csv("data/state_abbr.csv")
+
+# change state name to lower case
+state_abbr$state <- tolower(state_abbr$state)
+
+# summarize data to state and total funds
+grants_state <- data %>%
+  group_by(state) %>%
+  summarize(total_funds = sum(funds)) %>%
+  rename(state_abbr = state) %>%
+  left_join(state_abbr,
+            by = c("state_abbr" = "abbreviation")
+            )
+
+# for map data (from R Graphics Cookbook)
+states_map <- map_data("state")
+
+# join
+grants_map <- states_map %>%
+  left_join(grants_state,
+            by = c("region" = "state")
+            )
+```
+
+```{r echo=FALSE}
+
+# plot map
+grants_map %>%
+  ggplot(aes(x = long,
+             y = lat,
+             group = group,
+             fill = total_funds
+             )
+         ) +
+  geom_polygon(color = "black") +
+  coord_map("mercator") +
+  scale_fill_viridis_c(labels = scales::label_dollar()) +
+  labs(fill = "Grant Funding") +
+  theme_void()
+```
+
+```{r eval=FALSE, include=FALSE}
+
+grants_map %>%
+  ggplot(aes(map_id = region,
+             fill = total_funds
+             )
+         ) +
+  geom_map(map = states_map,
+           color = "black"
+           ) +
+  expand_limits(x = states_map$long,
+                y = states_map$lat
+                ) +
+  coord_map("mercator") +
+  # scale_fill_gradient2(low = "#559999",
+  #                      mid = "grey90",
+  #                      high = "#BB650B",
+  #                      midpoint = 915738
+  #                      ) +
+  scale_fill_viridis_c() +
+  labs(fill = "Grant Funding") +
+  theme_void()
+```
+
+<br>
+
+There's a clear leader when comparing funding by museum discipline. Nearly \$30 million was awarded to art museums, almost 50% more than the runner up, children's museums. Botanical gardens, zoos/aquariums, and science museums received similar amounts. History museums received the least amount of funds with \$6,201,416.
 
 ```{r eval=FALSE, include=FALSE}
 
 # absolute funds
-data_awarded %>%
+data %>%
   group_by(DISCIPL) %>%
   summarize(funds = sum(funds)) %>%
   arrange(-funds)
@@ -414,476 +316,477 @@ data_awarded %>%
 
 ```{r echo=FALSE}
 
-# plot of absolute funds
-data_awarded %>%
+# summarize to funds by discipline, save as new object
+data_disciplines <- data %>%
   group_by(DISCIPL) %>%
-  summarize(funds = sum(funds)) %>%
+  summarize(funds = sum(funds))
+
+# rename discipline factor levels
+# levels(data_disciplines$DISCIPL) <- list(ART = "Art",
+#                                          BOT = "Botanical Garden",
+#                                          CMU = "Children's",
+#                                          HST = "History",
+#                                          NAT = "Natural History",
+#                                          SCI = "Science",
+#                                          ZAW = "Zoo/Aquarium"
+#                                          )
+
+# rename discipline factor levels
+levels(data_disciplines$DISCIPL) <- c("Art",
+                                      "Botanical",
+                                      "Children's",
+                                      "History",
+                                      "Natural History",
+                                      "Science",
+                                      "Zoo/Aquarium"
+                                      )
+```
+
+```{r echo=FALSE}
+
+# plot of absolute funds by discipline
+data_disciplines %>%
+  ggplot(aes(x = reorder(DISCIPL, -funds),
+             y = funds,
+             # fill = DISCIPL
+             )
+         ) +
+  geom_col() +
+  scale_x_discrete("Museum Discipline") + # change x-axis label
+  scale_y_continuous("Grant Funds", # change y-axis label
+                   labels = scales::label_dollar() # reformat y-axis to $ with commas
+                   ) +
+  guides(fill = "none") + # remove legend
+  theme_classic()
+  # theme(axis.text.x = element_text(angle = 45)) # rotate x-axis labels
+```
+
+```{r eval=FALSE, include=FALSE}
+
+data_disciplines %>%
   ggplot(aes(x = reorder(DISCIPL, -funds),
              y = funds,
              fill = DISCIPL
              )
          ) +
-  geom_col()
-```
-
-<br>
-
-```{r eval=FALSE, include=FALSE}
-
-# number of grants
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r eval=FALSE, include=FALSE}
-
-# plot of number of grants
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(DISCIPL, -grants),
-             y = grants,
-             fill = DISCIPL
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-By discipline (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE}
-
-# plot of average grant
-data_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(DISCIPL, -average_grant),
-             y = average_grant,
-             fill = DISCIPL
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-By state (total value of grants).
-
-```{r eval=FALSE, include=FALSE}
-
-# absolute funds
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds)) %>%
-  arrange(-funds)
-```
-
-```{r echo=FALSE, fig.height=8}
-
-# plot of absolute funds
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(state, funds),
-             y = funds
-             )
-         ) +
   geom_col() +
-  coord_flip()
+  scale_y_continuous("Grant Funds", # change y-axis label
+                   labels = scales::label_dollar() # reformat y-axis to $ with commas
+                   ) +
+  labs(x = "Museum Discipline") + # change x-axis label
+  geom_text(aes(label = DISCIPL,
+                vjust = -0.8,
+                hjust = 0.3
+                ),
+            angle = 45
+            ) +
+  theme_classic()
 ```
+
+------------------------------------------------------------------------
 
 <br>
 
-```{r eval=FALSE, include=FALSE}
+### More funding went to museums with higher income
 
-# number of grants
-data_awarded %>%
-  group_by(state) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r eval=FALSE, fig.height=8, include=FALSE}
-
-# plot of number of grants
-data_awarded %>%
-  group_by(state) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(state, grants),
-             y = grants
-             )
-         ) +
-  geom_col() +
-  coord_flip()
-```
-
-<br>
-
-By state (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE, fig.height=8}
-
-# plot of average grant
-data_awarded %>%
-  group_by(state) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(state, average_grant),
-             y = average_grant
-             )
-         ) +
-  geom_col() +
-  coord_flip()
-```
-
-<br>
-
-By locale category, i.e. city, suburb, town, rural (total value of grants).
-
-```{r eval=FALSE, include=FALSE}
-
-# absolute funds
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(funds = sum(funds)) %>%
-  arrange(-funds)
-```
+I was curious to see how the grants are distributed relative to income reported by the museums. Surprisingly, more funding went to museums with higher income levels. This contradicted my assumption that grants would go to institutions that needed funding, and that museums with higher income need less funding because they have the resources to support their initiatives.
 
 ```{r echo=FALSE}
 
 # plot of absolute funds
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(LOCALE4, -funds),
-             y = funds
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-```{r eval=FALSE, include=FALSE}
-
-# number of grants
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r eval=FALSE, include=FALSE}
-
-# plot of number of grants
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(LOCALE4, -grants),
-             y = grants
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-By locale category (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
-
-```{r echo=FALSE}
-
-# plot of average grant
-data_awarded %>%
-  group_by(LOCALE4) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(LOCALE4, -average_grant),
-             y = average_grant
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-By IRS income category (total value of grants). 92 (15%) awarded institutions are missing values for this variable. Those institutions are not included in the graph below.
-
-```{r eval=FALSE, include=FALSE}
-
-# absolute funds
-data_awarded %>%
+data %>%
   filter(!is.na(INCOMECD15)) %>%
   group_by(INCOMECD15) %>%
   summarize(funds = sum(funds)) %>%
-  arrange(-funds)
-```
-
-```{r echo=FALSE}
-
-# plot of absolute funds
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds)) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -funds),
-             y = funds
+  add_row(INCOMECD15 = as.factor(1),
+          funds = 0
+          ) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = funds,
+             fill = INCOMECD15
              )
          ) +
-  geom_col()
+  geom_col() +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                   labels = scales::label_dollar() # reformat y-axis to $ with commas
+                   ) +
+  scale_fill_discrete("Income Level", 
+                      labels =  c("$0", 
+                               "$1 - $9,999", 
+                               "$10,000 - $24,999", 
+                               "$25,000 - $99,999",
+                               "$100,000 - $499,999", 
+                               "$500,000 - $999,999",
+                               "$1,000,000 - $4,999,999", 
+                               "$5,000,000 - $9,999,999",
+                               "$10,000,000 - $49,999,999", 
+                               "$50,000,000 to greater"
+                               )
+                    ) +
+  theme_classic()
 ```
+
+*Note - income data wasn't available for 15% of the museums and they aren't included in the chart above.*
+
+------------------------------------------------------------------------
 
 <br>
 
-```{r eval=FALSE, include=FALSE}
+### But how does this compare to income levels across *all* museums?
 
-# number of grants
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
+Before diving deeper it's worth comparing income levels of museums that received a grant to income levels of all museums in the IMLS data. By including the **6,726 museums that did not receive a grant** over the last 10 years [FOOTNOTE]{.underline} the relative proportions for each income level are clear. There are **nearly 1,300 museums that reported zero income**, the largest group in the data. There's a "bulge" in the middle income levels and another spike at the highest level, with **689 museums reporting over \$50 million in income**. With this context it still appears that more grants were awarded to museums with higher income levels.
 
-```{r eval=FALSE, include=FALSE}
+```{r include=FALSE}
 
-# plot of number of grants
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -grants),
-             y = grants
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-By IRS income category (average grant value).
-
-```{r eval=FALSE, include=FALSE}
-
-# average grant
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds),
-            grants = n()
+# create object for museums that did not receive a grant
+data_not_awarded <- data_museums %>%
+  full_join(data_grants, 
+            by = c("COMMONNAME" = "institution"), 
+            keep = TRUE,
+            relationship = "many-to-many"
             ) %>%
-  mutate(average_grant = funds / grants) %>%
-  arrange(-average_grant)
-```
+  filter(!is.na(COMMONNAME)) %>%    # remove awarded institutions not in the museum list
+  replace_na(list(year = 9999,      # replace NAs with values for analysis
+                  funds = 0
+                  )
+             ) %>%
+  mutate(awarded = if_else(funds > 0, TRUE, FALSE)) %>%
+  filter(year >= 2013) %>%
+  filter(awarded == FALSE)
 
-```{r echo=FALSE}
-
-# plot of average grant
-data_awarded %>%
+# count not awarded
+data_not_awarded_count <- data_not_awarded %>%
   filter(!is.na(INCOMECD15)) %>%
   group_by(INCOMECD15) %>%
-  summarize(funds = sum(funds),
-            grants = n()
-            ) %>%
-  mutate(average_grant = funds / grants) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -average_grant),
-             y = average_grant
-             )
-         ) +
-  geom_col()
-```
-
-<br>
-
-### Part 4
-
-Institutions that did not receive any grants.
-
-```{r}
-
-data_not_awarded <- data %>%
-  filter(funds == 0)
-```
-
-<br>
-
-How many institutions did not win an award over the last 10 years?
-
-```{r}
-
-data_not_awarded %>%
-  nrow()
-```
-
-<br>
-
-By discipline.
-
-```{r eval=FALSE, include=FALSE}
-
-# count
-data_not_awarded %>%
-  group_by(DISCIPL) %>%
   summarize(count = n()) %>%
-  arrange(-count)
+  mutate(awarded = FALSE)
+
+# count awarded
+data_awarded_count <- data %>%
+  filter(!is.na(INCOMECD15)) %>%
+  group_by(institution) %>%
+  slice_head() %>%
+  ungroup() %>%
+  group_by(INCOMECD15) %>%
+  summarize(count = n()) %>%
+  add_row(INCOMECD15 = as.factor(1),
+          count = 0
+          ) %>%
+  mutate(awarded = TRUE) %>%
+  arrange(INCOMECD15)
+
+# combine
+data_count <- data_awarded_count %>%
+  bind_rows(data_not_awarded_count)
+```
+
+```{r eval=FALSE, include=FALSE}
+
+data_count %>%
+  group_by(INCOMECD15) %>%
+  summarize(number = sum(count))
 ```
 
 ```{r echo=FALSE}
 
-# plot of count
-data_not_awarded %>%
-  group_by(DISCIPL) %>%
-  summarize(count = n()) %>%
-  ggplot(aes(x = reorder(DISCIPL, -count),
+data_count %>%
+  ggplot(aes(x = INCOMECD15,
              y = count,
-             fill = DISCIPL
+             fill = awarded
              )
          ) +
-  geom_col()
+  geom_col(position = "stack") +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Number of Museums") +
+  scale_fill_manual("Received grant?", 
+                      labels =  c("No",
+                                  "Yes"
+                                  ),
+                      values = c("gray",
+                                 "red")
+                      ) +
+  theme_classic()
+```
+
+*Note - income data wasn't available for 35% of the museums that did not receive a grant and they aren't included in the chart above.*
+
+------------------------------------------------------------------------
+
+<br>
+
+### Most grant programs require matching funds
+
+Let's look at how these grants are actually awarded. The IMLS has multiple grant programs with various eligibility criteria, funding amounts, and cost share requirements. In this data, the top four programs by funding awarded **represent 95% of the total funding** over the last 10 years. Of those, the top three require that the museum, "provide funds from non-federal sources in an amount that is equal to or greater than" the amount requested in the grant application. For example, if a museum applies for a \$100,000 grant through the *Museums for America* program they must match that amount through other (non-federal) means.
+
+<br>
+
+```{r echo=FALSE}
+
+program_table <- tibble("Rank" = c(1:4),
+                        "Program" = c("Museums for America",
+                                      "National Leadership Grants - Museums",
+                                      "Museums Empowered",
+                                      "Inspire! Grants for Small Museums"),
+                        "Total Funds" = c("$70,578,719",
+                                          "$16,292,260",
+                                          "$7,966,050",
+                                          "$2,141,872"
+                                          ),
+                        "Number of Grants" = c(465,
+                                               37,
+                                               53,
+                                               46
+                                               ),
+                        "Requires Matching Funds?" = c("Yes",
+                                                       "Yes",
+                                                       "Yes",
+                                                       "No")
+                           )
+
+program_table %>%
+  kbl() %>%
+  kable_classic(full_width = FALSE,
+                html_font = "helvetica"
+                )
 ```
 
 <br>
 
-By state.
+Isolating each program confirms that the top three programs skew towards higher income levels. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels. FOOTNOTE
 
-```{r eval=FALSE, include=FALSE}
+```{r echo=FALSE}
 
-# count
-data_not_awarded %>%
-  group_by(ADSTATE) %>%
-  summarize(count = n()) %>%
-  arrange(-count)
-```
-
-```{r echo=FALSE, fig.height=8}
-
-# plot of count
-data_not_awarded %>%
-  group_by(ADSTATE) %>%
-  summarize(count = n()) %>%
-  ggplot(aes(x = reorder(ADSTATE, count),
-             y = count
+p1 <- data %>%
+  filter(program == "Museums for America") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(1),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = funds
              )
          ) +
   geom_col() +
-  coord_flip()
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                     labels = scales::label_dollar(scale_cut = scales::cut_short_scale()),
+                     limits = c(0, 22000000)
+                     ) +
+  labs(title = "Museums for America") +
+  theme_classic() +
+  theme(plot.title = element_text(size = rel(0.9),
+                                  face = "bold"
+                                  ),
+        axis.title = element_text(size = rel(0.9))
+        )
+
+p2 <- data %>%
+  filter(program == "National Leadership Grants - Museums") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(0, 1, 2, 3, 3)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = funds
+             )
+         ) +
+  geom_col() +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                     labels = scales::label_dollar(scale_cut = scales::cut_short_scale()),
+                     limits = c(0, 22000000)
+                     ) +
+  labs(title = "Nat'l Leadership Grants - Museums") +
+  theme_classic() +
+  theme(plot.title = element_text(size = rel(0.9),
+                                  face = "bold"
+                                  ),
+        axis.title = element_text(size = rel(0.9))
+        )
+
+p3 <- data %>%
+  filter(program == "Museums Empowered: Professional Development Opportunities for Museum Staff") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(1, 2, 3, 3)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = funds
+             )
+         ) +
+  geom_col() +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                     labels = scales::label_dollar(scale_cut = scales::cut_short_scale()),
+                     limits = c(0, 22000000)
+                     ) +
+  labs(title = "Museums Empowered") +
+  theme_classic() +
+  theme(plot.title = element_text(size = rel(0.9),
+                                  face = "bold"
+                                  ),
+        axis.title = element_text(size = rel(0.9))
+        )
+
+p4 <- data %>%
+  filter(program == "Inspire! Grants for Small Museums") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(1, 2, 7, 8, 9)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = funds
+             )
+         ) +
+  geom_col() +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Grant Funds", # change y-axis label
+                     labels = scales::label_dollar(scale_cut = scales::cut_short_scale()),
+                     limits = c(0, 22000000)
+                     ) +
+  labs(title = "Inspire! Grants for Small Museums") +
+  theme_classic() +
+  theme(plot.title = element_text(size = rel(0.9),
+                                  face = "bold"
+                                  ),
+        axis.title = element_text(size = rel(0.9))
+        )
+
+(p1 | p2) / (p3 | p4)
 ```
+
+------------------------------------------------------------------------
 
 <br>
 
-By locale category. 30 (0.4%) institutions are missing values for this variable. Those institutions are not included in the graph below.
+### The burden of matching funds
+
+The top three grant programs may skew towards higher income levels because museums with lower income may not be able to afford the cost share requirements. Furthermore, the *Inspire! Grants for Small Museums* may skew towards museums with lower income because they don't have to provide matching funds.
+
+I'll use the median grant amount from the *Museums for America* program, rounded to \$150,000, as a benchmark for comparison among the income levels. Museums with income levels 0 to 3 make less than the \$150,000 needed for matching funds. Beyond that, museums have incomes greater than the \$150,000 threshold, some significantly more. For instance, museums at the highest income level have at least 333x that amount.
 
 ```{r eval=FALSE, include=FALSE}
 
-# count
-data_not_awarded %>%
-  filter(!is.na(LOCALE4)) %>%
-  group_by(LOCALE4) %>%
-  summarize(count = n()) %>%
-  arrange(-count)
+# test with Museums for America only to start
+# median grant value through Museums for America
+data %>%
+  filter(program == "Museums for America") %>%
+  summarize(median_grant = median(funds)) 
 ```
 
-```{r echo=FALSE}
+```{r include=FALSE}
 
-# plot of count
-data_awarded %>%
-  filter(!is.na(LOCALE4)) %>%
-  group_by(LOCALE4) %>%
-  summarize(count = n()) %>%
-  ggplot(aes(x = reorder(LOCALE4, -count),
-             y = count
+# create plot of income codes
+income_codes <- tibble(
+  code = as.factor(c(0:9)),
+  low = c(0, 1, 10000, 25000, 100000, 500000, 1000000, 5000000, 10000000, 50000000),
+  high = c(0, 9999, 24999, 99999, 499999, 999999, 4999999, 9999999, 49999999, 50000000)
+) %>%
+  mutate(mid = round(((high - low)/2) + low, 0),
+         diff = mid - 150000,
+         ratio = round((mid / 150000), 0)
+         )
+
+income_codes
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# create data for median grant label
+median_label <- tibble(
+  label = c("<span style='font-size:10pt'> **median grant** 
+            <br>
+            $150,000 
+            </span>"),
+  set = c(1),
+  x = c(2.5),
+  y = c(5000000)
+)
+
+# plot
+income_codes %>%
+  ggplot(aes(x = code,
+             y = mid
              )
          ) +
-  geom_col()
+  geom_col() +
+  geom_hline(yintercept = 150000,
+             color = "red",
+             linetype = "solid",
+             size = 1
+             ) +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Representative Income",
+                     labels = scales::label_dollar(),
+                     trans = "log10",
+                     breaks = c(10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)
+                     ) +
+  theme_classic() +
+  geom_richtext(data = median_label,
+                inherit.aes = FALSE,
+                aes(x = x,
+                    y = y,
+                    label = label
+                    ),
+                fill = "gray",
+                label.color = "black",
+                # label.padding = grid::unit(rep(0, 4), "pt")
+                ) +
+  geom_segment(aes(x = 2.5,
+                   y = 2000000,
+                   xend = 2.5,
+                   yend = 160000,
+                   ),
+               arrow = arrow(length = unit(5, "pt"),
+                             ends = "last",
+                             type = "closed"
+               )
+  )
 ```
 
-<br>
+```{r}
 
-By income. 2,330 (35%) institutions are missing values for this variable. Those institutions are not included in the graph below.
-
-```{r eval=FALSE, include=FALSE}
-
-# count
-data_not_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(grants = n()) %>%
-  arrange(-grants)
-```
-
-```{r echo=FALSE}
-
-# plot of count
-data_awarded %>%
-  filter(!is.na(INCOMECD15)) %>%
-  group_by(INCOMECD15) %>%
-  summarize(grants = n()) %>%
-  ggplot(aes(x = reorder(INCOMECD15, -grants),
-             y = grants
+income_codes %>%
+  ggplot(aes(x = code,
+             y = ratio
              )
          ) +
-  geom_col()
+  geom_col() +
+  scale_x_discrete("Income Level") +
+  scale_y_continuous("Ratio of Income to Matching Funds") +  
+  theme_classic()
 ```
 
-<br>
-
-### Part 5
-
-Correlation to other socio-economic criteria.
-
--   Use zip codes to compare to low-income areas (census bureau?)
+------------------------------------------------------------------------
 
 <br>
 
-### Part 6
-
-Call to action.
+### Call to action
 
 -   Access to museums improve outcomes
 
@@ -891,18 +794,148 @@ Call to action.
 
 -   People can donate to the least likely museums
 
+------------------------------------------------------------------------
+
 <br>
+
+### Footnotes
+
+1.  I don't know why the institutions did not receive a grant.
+2.  INCOMECD15 used as benchmark for income even though it could be different before or after.
+3.  Institutions may have received a grant in a different year than when their INCOMECD15 year
+4.  The [application information](https://imls.gov/grants/available/inspire-grants-small-museums) for this program explains that it is designed to support small museums, but it's not clear how "small" is defined. If there is a correlation between size and income level, then museums with high income levels may not be eligible for this program. That could be one explanation for the distribution above. Unfortunately, the IMLS data doesn't contain information regarding size.
+
+<br>
+
+### Methodology
+
+Placeholder.
+
+The IMLS maintains a list of museums in the US in a set of files called the Museum Data Files (MDF). The MDF contain basic institutional identifying information for about 30,000 museums and related organizations in the US. They are split into three files using the following categories. The MDF was last updated in 2018.
+
+The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
+
+<br>
+
+### Sources
+
+Placeholder.
+
+<br>
+
+### To Do
+
+-   CSS to set width of html output?
+-   Link to GitHub repository
+-   AK and HI in map
+-   Color scale in map
+-   Account for number of museums in state, discipline?
+-   colors for funds by discipline
+-   rename income Level or use a legend early on?
+-   link to footnotes
+-   bold key text
+-   center charts
+-   smart brevity?
 
 ```{r eval=FALSE, include=FALSE}
 
 # SANDBOX
 
-# unknown if museums that did not receive awards applied for grants
-
 # institutions with more revenue/income can pay for staff who apply for grants
 
 # impact of private/other funding on applying for grants, winning
 
+```
 
-# group or stacked col chart of awarded/not awarded by variables
+```{r eval=FALSE, include=FALSE}
+
+p1 <- data %>%
+  filter(program == "Museums for America") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(1),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col() +
+  ylim(0, 150) +
+  theme_classic()
+
+p2 <- data %>%
+  filter(program == "National Leadership Grants - Museums") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(0, 1, 2, 3, 3)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col() +
+  ylim(0, 150) +
+  theme_classic()
+
+p3 <- data %>%
+  filter(program == "Museums Empowered: Professional Development Opportunities for Museum Staff") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(1, 2, 3, 3)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col() +
+  ylim(0, 150) +
+  theme_classic()
+
+p4 <- data %>%
+  filter(program == "Inspire! Grants for Small Museums") %>%
+  group_by(INCOMECD15) %>%
+  filter(!is.na(INCOMECD15)) %>%
+  summarize(count = n(),
+            funds = sum(funds)
+            ) %>%
+  add_row(INCOMECD15 = as.factor(c(1, 2, 7, 8, 9)),
+          count = 0,
+          funds = 0
+          ) %>%
+  arrange(INCOMECD15) %>%
+  ggplot(aes(x = INCOMECD15,
+             y = count
+             )
+         ) +
+  geom_col() +
+  ylim(0, 150) +
+  theme_classic()
+
+(p1 | p2) / (p3 | p4)
+```
+
+```{r}
+
+data %>%
+  group_by(program) %>%
+  summarize(total_funds = sum(funds)) %>%
+  arrange(-total_funds)
 ```
