@@ -39,7 +39,7 @@ Here is a quick summary of what I learned:
 
 <br>
 
-### Museum grants over the last 10 years
+#### Museum grants over the last 10 years
 
 The Urban Institute led me to data from the Institute of Museum and Library Services (IMLS), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes available data regarding the grants they award to museums through various programs.
 
@@ -156,9 +156,9 @@ data %>%
 
 <br>
 
-### Where did all that funding go?
+#### Where did all that funding go?
 
-The 628 grants were awarded to 254 different museums. Of those 254, 44% received one grant and the remaining 56% received multiple grants. The American Museum of Natural History in New York tops the list both in terms of number of grants received (12) and the total funding received (\$3,411,368).
+The 628 grants were awarded to **254 different museums**. Of those 254, 44% received one grant and the remaining **56% received multiple grants**. The American Museum of Natural History in New York tops the list both in terms of number of grants received (12) and the total funding received (\$3,411,368).
 
 ```{r include=FALSE}
 
@@ -305,7 +305,7 @@ grants_map %>%
 
 <br>
 
-There's a clear leader when comparing funding by museum discipline. Nearly \$30 million was awarded to art museums, almost 50% more than the runner up, children's museums. Botanical gardens, zoos/aquariums, and science museums received similar amounts. History museums received the least amount of funds with \$6,201,416.
+There's a clear leader when comparing funding by museum discipline. **Nearly \$30 million was awarded to art museums**, almost 50% more than the runner up, children's museums. Botanical gardens, zoos/aquariums, and science museums received similar amounts. **History museums received the least** amount of funds with \$6,201,416.
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -379,9 +379,11 @@ data_disciplines %>%
 
 <br>
 
-### More funding went to museums with higher income
+#### More funding went to museums with higher income
 
-I was curious to see how the grants are distributed relative to income reported by the museums. Surprisingly, more funding went to museums with higher income levels. This contradicted my assumption that grants would go to institutions that needed funding, and that museums with higher income need less funding because they have the resources to support their initiatives.
+I was curious to see how the grants are distributed relative to income reported by the museums. Surprisingly, **more funding went to museums with higher income levels**. This contradicted my assumption that grants would go to institutions that needed funding, and that museums with higher income need less funding because they have the resources to support their initiatives.
+
+<br>
 
 ```{r echo=FALSE}
 
@@ -400,11 +402,13 @@ income_table <- tibble("Income Level" = c(0:9),
 )
 
 income_table %>%
-  kbl() %>%
+  kbl(align = "cl") %>%
   kable_classic(full_width = FALSE,
                 html_font = "helvetica"
                 )
 ```
+
+<br>
 
 ```{r echo=FALSE, fig.align='center'}
 
@@ -448,7 +452,7 @@ data %>%
 
 <br>
 
-### But how does this compare to income levels across *all* museums?
+#### But how does this compare to income levels across *all* museums?
 
 Before diving deeper it's worth comparing income levels of museums that received a grant to income levels of all museums in the IMLS data. By including the **6,726 museums that did not receive a grant** over the last 10 years [FOOTNOTE]{.underline} the relative proportions for each income level are clear. There are **nearly 1,300 museums that reported zero income**, the largest group in the data. There's a "bulge" in the middle income levels and another spike at the highest level, with **689 museums reporting over \$50 million in income**. With this context it still appears that more grants were awarded to museums with higher income levels.
 
@@ -530,7 +534,7 @@ data_count %>%
 
 <br>
 
-### Most grant programs require matching funds
+#### Most grant programs require matching funds
 
 Let's look at how these grants are actually awarded. The IMLS has multiple grant programs with various eligibility criteria, funding amounts, and cost share requirements. In this data, the top four programs by funding awarded **represent 95% of the total funding** over the last 10 years. Of those, the top three require that the museum, "provide funds from non-federal sources in an amount that is equal to or greater than" the amount requested in the grant application. For example, if a museum applies for a \$100,000 grant through the *Museums for America* program they must match that amount through other (non-federal) means.
 
@@ -560,7 +564,7 @@ program_table <- tibble("Rank" = c(1:4),
                            )
 
 program_table %>%
-  kbl() %>%
+  kbl(align = "clccc") %>%
   kable_classic(full_width = FALSE,
                 html_font = "helvetica"
                 )
@@ -568,7 +572,7 @@ program_table %>%
 
 <br>
 
-Isolating each program confirms that the top three programs skew towards higher income levels. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels. FOOTNOTE
+Isolating each program confirms that the **top three programs skew towards higher income levels**. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels. FOOTNOTE
 
 ```{r echo=FALSE, fig.align='center'}
 
@@ -699,11 +703,11 @@ p4 <- data %>%
 
 <br>
 
-### The burden of matching funds
+#### The burden of matching funds
 
-The top three grant programs may skew towards higher income levels because museums with lower income may not be able to afford the cost share requirements, thus either making them ineligible or precluding them from applying in the first place. The *Inspire! Grants for Small Museums* may skew towards museums with lower income because they don't have to provide matching funds.
+The top three grant programs may skew towards higher income levels because **museums with lower income may not be able to afford the cost share requirements**, thus either making them ineligible or precluding them from applying in the first place. The *Inspire! Grants for Small Museums* may skew towards museums with lower income because they **don't have to provide matching funds**.
 
-I'll use the median grant amount from the *Museums for America* program, rounded to \$150,000, as a benchmark for comparison among the income levels. Museums with income levels 0 to 3 make less than the \$150,000 needed for matching funds. Beyond that, museums have incomes greater than the \$150,000 threshold, some significantly more. For instance, museums at the highest income level have at least 333x that amount.
+I'll use the median grant amount from the *Museums for America* program, rounded to \$150,000, as a benchmark for comparison among the income levels. The representative income levels are the midpoint of the income range for each level, e.g. level 4 is \$300,000. **Museums with income levels 0 to 3 make less than the \$150,000 needed for matching funds**. At levels 4 and 5, museums' income is over that amount, but not significantly so. Beyond that, museums have incomes orders of magnitude greater than the \$150,000. For instance, **museums at the highest income level made at least 333x that amount**.
 
 ```{r eval=FALSE, include=FALSE}
 
@@ -734,13 +738,15 @@ income_codes
 
 # create data for median grant label
 median_label <- tibble(
-  label = c("<span style='font-size:10pt'> **median grant** 
+  label = c("<span style='font-size:10pt'> **amount required to** 
+            <br>
+            **match median grant**
             <br>
             $150,000 
             </span>"),
   set = c(1),
   x = c(2.5),
-  y = c(5000000)
+  y = c(7500000)
 )
 
 # plot
@@ -771,13 +777,13 @@ income_codes %>%
                     label = label
                     ),
                 fill = "white",
-                label.color = "black",
+                label.color = NA,
                 # label.padding = grid::unit(rep(0, 4), "pt")
                 ) +
   geom_segment(aes(x = 2.5,
                    y = 2000000,
                    xend = 2.5,
-                   yend = 160000,
+                   yend = 200000,
                    ),
                arrow = arrow(length = unit(5, "pt"),
                              ends = "last",
@@ -790,7 +796,7 @@ income_codes %>%
 
 <br>
 
-### Call to action
+#### Call to action
 
 -   Access to museums improve outcomes
 
@@ -846,12 +852,6 @@ LINK TO GITHUB REPOSITORY
 # Link to GitHub repository
 # 
 # AK and HI in map
-# 
-# Color scale in map
-# 
-# Account for number of museums in state, discipline?
-# 
-# colors for funds by discipline
 # 
 # rename income Level or use a legend early on?
 # 
