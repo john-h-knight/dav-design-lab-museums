@@ -41,7 +41,7 @@ Here is a quick summary of what I learned:
 
 #### Museum grants over the last 10 years
 
-The Urban Institute led me to data from the Institute of Museum and Library Services (IMLS), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes available data regarding the grants they award to museums through various programs.
+The Urban Institute led me to data from the [Institute of Museum and Library Services (IMLS)](https://imls.gov/), an independent agency of the federal government on a mission to, "advance, support, and empower America's museums, libraries, and related organizations through grantmaking, research, and policy development." The IMLS maintains a list of museums and associated information, last updated in 2018. The IMLS also makes data available regarding the grants they award to museums through various programs.
 
 Although the grant data goes as far back as 1996 I decided to bound the time frame to the last 10 years (2013 - 2022). Over that time period the IMLS **awarded \$101,674,483 through 628 grants** to museums in the US. The amount awarded each year see-sawed from 2013 to 2018 before **rising sharply in 2019**. It continues to increase through 2022, though at a slower rate.
 
@@ -383,12 +383,16 @@ data_disciplines %>%
 
 I was curious to see how the grants are distributed relative to income reported by the museums. Surprisingly, **more funding went to museums with higher income levels**. This contradicted my assumption that grants would go to institutions that needed funding, and that museums with higher income need less funding because they have the resources to support their initiatives.
 
+I want to take a minute to explain how income levels will be represented throughout the article. The database maintained by the IMLS includes a single-digit IRS code related to the amount of income reported by the museum on their annual returns[^1]. A detailed breakdown of the codes is provided below, but just know that **the higher the number, the higher the income**.
+
+[^1]: The income code is based on the latest return filed with the IRS, as documented in the IRS Business Master File, May, 2015. While I don't have income data for every year that I have grant data, I think it's a reasonable benchmark to use for comparing museums.
+
 <br>
 
 ```{r echo=FALSE}
 
 income_table <- tibble("Income Level" = c(0:9),
-                       "Income Range" = c("$0", 
+                       "Range" = c("$0", 
                                           "$1 - $9,999", 
                                           "$10,000 - $24,999", 
                                           "$25,000 - $99,999",
@@ -454,7 +458,7 @@ data %>%
 
 #### But how does this compare to income levels across *all* museums?
 
-Before diving deeper it's worth comparing income levels of museums that received a grant to income levels of all museums in the IMLS data. By including the **6,726 museums that did not receive a grant** over the last 10 years [FOOTNOTE]{.underline} the relative proportions for each income level are clear. There are **nearly 1,300 museums that reported zero income**, the largest group in the data. There's a "bulge" in the middle income levels and another spike at the highest level, with **689 museums reporting over \$50 million in income**. With this context it still appears that more grants were awarded to museums with higher income levels.
+Before diving deeper it's worth comparing income levels of museums that received a grant to income levels of all museums in the IMLS data. By including the **6,726 museums that did not receive a grant** over the last 10 years the relative proportions for each income level are clear. There are **nearly 1,300 museums that reported zero income**, the largest group in the data. There's a "bulge" in the middle income levels and another spike at the highest level, with **689 museums reporting over \$50 million in income**. With this context it still appears that more grants were awarded to museums with higher income levels.
 
 ```{r include=FALSE}
 
@@ -572,7 +576,9 @@ program_table %>%
 
 <br>
 
-Isolating each program confirms that the **top three programs skew towards higher income levels**. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels. FOOTNOTE
+Isolating each program confirms that the **top three programs skew towards higher income levels**. The *Inspire! Grants for Small Museums* program, which does not require matching funds, was awarded to museums with mid-range and lower income levels[^2].
+
+[^2]: The [application information](https://imls.gov/grants/available/inspire-grants-small-museums) for this program explains that it is designed to support small museums, but it's not clear how "small" is defined. If there is a correlation between size and income level, then museums with high income levels may not be eligible for this program. That could be one explanation for the distribution above. Unfortunately, the IMLS data doesn't contain information regarding size.
 
 ```{r echo=FALSE, fig.align='center'}
 
@@ -796,38 +802,35 @@ income_codes %>%
 
 <br>
 
-#### Call to action
+#### There should be more grants for museums with lower income
 
--   Access to museums improve outcomes
+Museums provide critical economic, educational, and cultural benefits to their communities. They also support many conservation efforts. According to the American Alliance of Museums,
 
--   IMLS should direct more funding to areas that need it
+-   Museums **return more than \$5 in tax revenue for every \$1 they receive in funding** from all levels of government
 
--   People can donate to the least likely museums
+-   Museums support over 726,000 jobs
+
+-   They receive approximately **55 million visits each year from students** in school groups
+
+-   More people visit art museums, science centers, historic houses or sites, zoos, or aquariums than attend professional sporting events
+
+-   Zoos and aquariums spent **\$209 million on field conservation projects** in 117 countries in 2021
+
+With these facts in mind I think it's important that more grants be awarded to museums with lower income so that the communities in which they reside can benefit from all that these organizations have to offer. Here are a couple steps that the IMLS could take:
+
+-   Increase funding for the *Inspire! Grants for Small Museums* program to reach more museums
+
+-   Create new grant programs designed for museums with lower income regardless of size
+
+-   Modify cost sharing requirements required by other grant programs based on income level
+
+On a more individual level, signing up for a membership or making a donation is another way to support your favorite museum. You could also reach out to your congressional representatives and let them know that you value museums so that they provide the IMLS with the resources required to support museums.
+
+<br>
 
 ------------------------------------------------------------------------
 
 ###  {.tabset}
-
-#### Footnotes
-
-1.  I don't know why the institutions did not receive a grant.
-2.  INCOMECD15 used as benchmark for income even though it could be different before or after.
-3.  Institutions may have received a grant in a different year than when their INCOMECD15 year
-4.  The [application information](https://imls.gov/grants/available/inspire-grants-small-museums) for this program explains that it is designed to support small museums, but it's not clear how "small" is defined. If there is a correlation between size and income level, then museums with high income levels may not be eligible for this program. That could be one explanation for the distribution above. Unfortunately, the IMLS data doesn't contain information regarding size.
-
-<br>
-
-#### Methodology
-
-Placeholder.
-
-The IMLS maintains a list of museums in the US in a set of files called the Museum Data Files (MDF). The MDF contain basic institutional identifying information for about 30,000 museums and related organizations in the US. They are split into three files using the following categories. The MDF was last updated in 2018.
-
-The IMLS also makes available data regarding the grants they award to these institutions for various initiatives.
-
-LINK TO GITHUB REPOSITORY
-
-<br>
 
 #### Sources
 
@@ -839,28 +842,30 @@ LINK TO GITHUB REPOSITORY
 
 4.  American Alliance of Museums. Museum Facts & Data. <https://www.aam-us.org/programs/about-museums/museum-facts-data/>.
 
-<br>
+#### Methodology
+
+The IMLS maintains a list of museums in the US in a set of files called the Museum Data Files (MDF). The MDF contain basic institutional identifying information for about 30,000 museums and related organizations in the US. They are split into three separate CSV files as follows:
+
+1.  Categorized museums, i.e. art, botanical gardens, history, science, etc. (7,429 entries)
+
+2.  Uncategorized or general museums (7,959 entries)
+
+3.  Historical societies and historic preservation (14,783 entries)
+
+For this project I only used the first file from the MDF because the categorization provides another lens through which to look at the data, and to constrain it to a manageable scope.
+
+I also downloaded grant data from the IMLS, specifically the Office of Museum Services. This includes the grant amount, year awarded, museum awarded, and grant program.
+
+I then joined the MDF file and the grant data in R based on the name of the museum. If the museum name in the grant data didn't find a matching museum in the MDF then it was dropped. There are a couple reasons why there wouldn't be a match:
+
+-   The museum that received the grant is not in file #1, it's in file #2 or #3
+
+-   The spelling of the name or nomenclature differed
+
+-   The museum is not in the MDF because it was established after 2018
+
+I suspect the first bullet is the largest contributor because file #1 represents only about 25% of the museums in the MDF.
+
+[Code repository on GitHub](https://github.com/john-h-knight/dav-design-lab-museums)
 
 ###  {.unnumbered}
-
-```{r eval=FALSE, include=FALSE}
-
-# To Do
-# 
-# CSS to set width of html output?
-# 
-# Link to GitHub repository
-# 
-# AK and HI in map
-# 
-# rename income Level or use a legend early on?
-# 
-# link to footnotes
-# 
-# bold key text
-# 
-# center charts
-# 
-# smart brevity?
-
-```
